@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Alert Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #eee;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; overflow: hidden; }
+
+        .header {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 24px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 { font-size: 1.8em; color: #fff; }
+        .header p { color: #aaa; font-size: 0.9em; margin-top: 4px; }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            background: rgba(220,53,69,0.2);
+            color: #ff6b7a;
+            border: 1px solid rgba(220,53,69,0.3);
+            transition: all 0.3s;
+        }
+
+        .status-bar.connected {
+            background: rgba(40,167,69,0.2);
+            color: #5be58b;
+            border-color: rgba(40,167,69,0.3);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: blink 1s infinite;
+        }
+
+        .status-bar.connected .status-dot { animation: none; }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* Setup banner */
+        .setup-banner {
+            background: rgba(255,193,7,0.1);
+            border: 1px solid rgba(255,193,7,0.3);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            font-size: 0.85em;
+            line-height: 1.7;
+            color: #ffd54f;
+        }
+
+        .setup-banner strong { color: #ffc107; }
+        .setup-banner code {
+            background: rgba(0,0,0,0.3);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.95em;
+        }
+
+        details summary {
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1em;
+            color: #ffc107;
+            margin-bottom: 6px;
+        }
+
+        .grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
+
+        @media(max-width:800px){ .grid{ grid-template-columns:1fr; } }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 24px;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .card h2 {
+            font-size: 1.1em;
+            color: #fff;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .form-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #bbb;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            font-size: 0.95em;
+            color: #eee;
+            transition: border-color 0.2s;
+        }
+
+        input::placeholder { color: #666; }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(102,126,234,0.1);
+        }
+
+        select option { background: #1a1a2e; color: #eee; }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; }
+        .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #ccc;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+
+        .btn-danger {
+            background: rgba(220,53,69,0.2);
+            color: #ff6b7a;
+            border: 1px solid rgba(220,53,69,0.3);
+            padding: 6px 12px;
+            font-size: 0.8em;
+        }
+        .btn-danger:hover { background: rgba(220,53,69,0.35); }
+
+        .btn-edit {
+            background: rgba(102,126,234,0.2);
+            color: #8fa3f5;
+            border: 1px solid rgba(102,126,234,0.3);
+            padding: 6px 12px;
+            font-size: 0.8em;
+        }
+        .btn-edit:hover { background: rgba(102,126,234,0.35); }
+
+        .btn-test {
+            background: rgba(40,167,69,0.2);
+            color: #5be58b;
+            border: 1px solid rgba(40,167,69,0.3);
+            padding: 6px 12px;
+            font-size: 0.8em;
+        }
+        .btn-test:hover { background: rgba(40,167,69,0.35); }
+
+        .alert-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .alert-item:hover { border-color: rgba(102,126,234,0.3); }
+
+        .alert-name { font-weight: 600; color: #fff; margin-bottom: 4px; }
+        .alert-meta { font-size: 0.8em; color: #888; line-height: 1.6; min-width: 0; }
+        .alert-meta span {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        .alert-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #555; }
+        .empty-state-icon { font-size: 2.5em; margin-bottom: 10px; }
+
+        .preview-box {
+            background: #000;
+            border-radius: 8px;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #444;
+            font-size: 0.85em;
+            margin-top: 14px;
+            position: relative;
+        }
+        .preview-box video { width: 100%; height: 100%; object-fit: contain; }
+
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 8px;
+            z-index: 9999;
+            pointer-events: none;
+            max-width: 340px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+            pointer-events: none;
+            word-break: break-word;
+        }
+        .toast.success { background: #28a745; color: #fff; }
+        .toast.error   { background: #dc3545; color: #fff; }
+        .toast.info    { background: #667eea; color: #fff; }
+
+        @keyframes slideIn {
+            from { transform: translateX(110%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(110%); opacity: 0; }
+        }
+        .toast.removing {
+            animation: slideOut 0.25s ease forwards;
+        }
+
+        .editing-badge {
+            display: inline-block;
+            background: rgba(255,193,7,0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255,193,7,0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
+
+        .chromakey-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(40,167,69,0.15);
+            color: #5be58b;
+            border: 1px solid rgba(40,167,69,0.3);
+            padding: 1px 7px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        /* Sync status badge */
+        .sync-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 600;
+            background: rgba(102,126,234,0.15);
+            color: #8fa3f5;
+            border: 1px solid rgba(102,126,234,0.25);
+        }
+        .sync-badge.synced {
+            background: rgba(40,167,69,0.15);
+            color: #5be58b;
+            border-color: rgba(40,167,69,0.3);
+        }
+        .sync-badge.syncing {
+            background: rgba(255,193,7,0.15);
+            color: #ffc107;
+            border-color: rgba(255,193,7,0.3);
+        }
+        .sync-badge.error {
+            background: rgba(220,53,69,0.15);
+            color: #ff6b7a;
+            border-color: rgba(220,53,69,0.3);
+        }
+
+        .btn-export {
+            background: rgba(255,193,7,0.15);
+            color: #ffc107;
+            border: 1px solid rgba(255,193,7,0.35);
+            border-radius: 8px;
+            padding: 7px 16px;
+            font-size: 0.83em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-export:hover { background: rgba(255,193,7,0.28); }
+
+        .btn-import {
+            background: rgba(96,165,250,0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(96,165,250,0.35);
+            border-radius: 8px;
+            padding: 7px 16px;
+            font-size: 0.83em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-import:hover { background: rgba(96,165,250,0.28); }
+
+        .btn-clear-all {
+            background: rgba(220,53,69,0.12);
+            color: #ff8a95;
+            border: 1px solid rgba(220,53,69,0.25);
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 0.83em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-clear-all:hover { background: rgba(220,53,69,0.26); border-color: rgba(220,53,69,0.5); }
+
+        /* ============ CONFIRM MODAL ============ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(0,0,0,0.65);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .modal-overlay.visible { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: #1a1a2e;
+            border: 1px solid rgba(220,53,69,0.35);
+            border-radius: 14px;
+            padding: 28px 30px 24px;
+            max-width: 380px; width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            transform: scale(0.92);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.visible .modal-box { transform: scale(1); }
+        .modal-icon { font-size: 2.4em; text-align: center; margin-bottom: 10px; }
+        .modal-title { font-size: 1.1em; font-weight: 700; color: #fff; text-align: center; margin-bottom: 8px; }
+        .modal-text  { font-size: 0.88em; color: #aaa; text-align: center; line-height: 1.6; margin-bottom: 22px; }
+        .modal-btns  { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn-cancel {
+            flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.08); color: #ccc; font-size: 0.9em; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .modal-btn-cancel:hover { background: rgba(255,255,255,0.14); }
+        .modal-btn-confirm {
+            flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(220,53,69,0.4);
+            background: rgba(220,53,69,0.2); color: #ff6b7a; font-size: 0.9em; font-weight: 700;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .modal-btn-confirm:hover { background: rgba(220,53,69,0.4); }
+
+        /* ============ SEARCH ============ */
+        .search-wrapper { position: relative; margin-bottom: 12px; }
+        .search-input {
+            width: 100%; padding: 9px 34px 9px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px; color: #eee; font-size: 0.88em;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { outline:none; border-color:#667eea; background:rgba(102,126,234,0.08); }
+        .search-input::placeholder { color:#555; }
+        .search-clear {
+            position:absolute; right:10px; top:50%; transform:translateY(-50%);
+            background:none; border:none; color:#555; cursor:pointer;
+            font-size:1em; padding:2px 4px; display:none;
+        }
+        .search-clear.visible { display:block; }
+        .search-clear:hover { color:#aaa; }
+
+        /* ============ QUEUE PANEL ============ */
+        .queue-panel {
+            background: rgba(40,167,69,0.06);
+            border: 1px solid rgba(40,167,69,0.18);
+            border-radius: 10px; padding: 10px 14px;
+            margin-bottom: 12px;
+        }
+        .queue-panel.q-hidden { display:none; }
+        .queue-panel-header {
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:8px; font-size:0.83em; font-weight:700; color:#5be58b;
+        }
+        .queue-badge {
+            background:rgba(40,167,69,0.2); border-radius:10px;
+            padding:1px 8px; font-size:0.9em; color:#5be58b;
+        }
+        .queue-now {
+            display:flex; align-items:center; gap:8px;
+            padding:7px 10px;
+            background:rgba(40,167,69,0.1);
+            border:1px solid rgba(40,167,69,0.2);
+            border-radius:6px; font-size:0.83em; color:#5be58b;
+        }
+        .q-dot {
+            width:8px; height:8px; border-radius:50%;
+            background:#5be58b; flex-shrink:0; animation:blink 0.8s infinite;
+        }
+        .queue-progress {
+            height:3px; background:rgba(255,255,255,0.07);
+            border-radius:2px; overflow:hidden; margin:6px 0 2px;
+        }
+        .queue-progress-bar {
+            height:100%;
+            background:linear-gradient(90deg,#5be58b,#28a745);
+            border-radius:2px; transition:width 0.4s linear;
+        }
+        .q-row {
+            display:flex; align-items:center; gap:8px;
+            font-size:0.78em; color:#888; padding:3px 2px;
+        }
+        .q-pos {
+            background:rgba(255,255,255,0.07); border-radius:4px;
+            padding:1px 6px; font-size:0.85em; color:#555; flex-shrink:0;
+        }
+
+        /* ============ DRAG & DROP ============ */
+        .drag-handle {
+            cursor:grab; color:#333; padding:4px 8px 4px 0;
+            font-size:1.15em; flex-shrink:0; user-select:none;
+            transition:color 0.15s; display:flex; align-items:center; line-height:1;
+        }
+        .drag-handle:hover { color:#667; }
+        .drag-handle:active { cursor:grabbing; }
+        .alert-item.dragging { opacity:0.3; border-color:rgba(102,126,234,0.5) !important; }
+        .alert-item.drag-over {
+            border-color:rgba(102,126,234,0.6) !important;
+            background:rgba(102,126,234,0.09) !important;
+            box-shadow:0 0 0 2px rgba(102,126,234,0.2);
+        }
+        .alert-order {
+            font-size:0.7em; color:#484858; background:rgba(255,255,255,0.05);
+            border-radius:4px; padding:1px 5px; margin-right:4px;
+        }
+
+        /* ============ CHAT MSG TOGGLE ============ */
+        .chat-toggle-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .chat-toggle-label { flex:1; min-width:0; font-size:0.9em; color:#ccc; }
+        .chat-toggle-label strong { color:#fff; }
+        .chat-toggle-label small  { display:block; color:#666; font-size:0.82em; margin-top:2px; }
+        .chat-status-badge {
+            font-size:0.78em; font-weight:700; padding:3px 10px;
+            border-radius:6px; transition:all 0.2s;
+        }
+        .chat-status-badge.on  { background:rgba(40,167,69,0.2);  color:#5be58b; border:1px solid rgba(40,167,69,0.35); }
+        .chat-status-badge.off { background:rgba(220,53,69,0.15); color:#ff6b7a; border:1px solid rgba(220,53,69,0.3);  }
+
+        /* Компактна версія — для розміщення всередині картки */
+        .chat-toggle-bar.compact {
+            padding: 9px 12px;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .chat-toggle-bar.compact .chat-toggle-label { font-size: 0.75em; }
+        .chat-toggle-bar.compact .chat-toggle-label small { font-size: 0.7em; }
+        .chat-toggle-bar.compact .chat-status-badge { font-size: 0.68em; padding: 2px 7px; }
+
+    </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-overlay" id="confirmModal" onclick="onModalOverlayClick(event)">
+    <div class="modal-box">
+        <div class="modal-icon">🧹</div>
+        <div class="modal-title">Очистити список нагород?</div>
+        <div class="modal-text">Ви дійсно бажаєте очистити список нагород?<br>
+        Всі <strong id="modalCount" style="color:#ff8a95">0</strong> алертів будуть видалені.<br>
+        <span style="color:#666">Цю дію не можна скасувати.</span></div>
+        <div class="modal-btns">
+            <button class="modal-btn-cancel" onclick="closeConfirmModal()">✖ Скасувати</button>
+            <button class="modal-btn-confirm" onclick="confirmClearAlerts()">🗑 Так, очистити</button>
+        </div>
+    </div>
+</div>
+<div class="container">
+
+    <div class="header">
+        <div>
+            <h1>🎬 Video Alert Manager</h1>
+            <p>Налаштування відео-алертів для Twitch Channel Points</p>
+        </div>
+        <div id="statusBar" class="status-bar">
+            <div class="status-dot"></div>
+            <span id="statusText">Підключення...</span>
+        </div>
+    </div>
+
+    <!-- CHAT MESSAGE TOGGLE -->
+    <div class="chat-toggle-bar">
+        <span style="font-size:1.3em">💬</span>
+        <div class="chat-toggle-label">
+            <strong>Повідомлення в чат при активації нагороди</strong>
+            <small>Якщо увімкнено — Streamer.bot надсилає «[user] активував нагороду 🎬» в Twitch чат</small>
+        </div>
+        <span id="chatMsgBadge" class="chat-status-badge on">✅ Увімкнено</span>
+        <label style="position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;cursor:pointer" title="Перемкнути надсилання в чат">
+            <input type="checkbox" id="chatMsgToggle" style="opacity:0;width:0;height:0;position:absolute" onchange="onChatMsgToggle(this.checked)">
+            <span id="chatMsgTrack" style="position:absolute;inset:0;border-radius:26px;transition:background 0.2s,border-color 0.2s;background:rgba(40,167,69,0.5);border:1px solid rgba(40,167,69,0.8)"></span>
+            <span id="chatMsgThumb" style="position:absolute;top:4px;left:4px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(20px)"></span>
+        </label>
+    </div>
+
+    <!-- ІНСТРУКЦІЯ -->
+    <div class="setup-banner">
+        <details>
+            <summary>⚙️ Потрібне налаштування Streamer.bot (розгорнути)</summary>
+            <br>
+            <strong>1. Action "VideoAlertBroadcast"</strong><br>
+            Sub-action → <code>Execute C# Code</code> → вставити код нижче.
+            Trigger: <code>Channel Points → Channel Point Reward Redeemed</code> (будь-яка).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
+
+public class CPHInline
+{
+    const string LOG_PATH = @"D:\Program\obs\Obs Twich Reward\alerts.log";
+
+    static string GetJsonField(string obj, string key)
+    {
+        var m = Regex.Match(obj, "\"" + Regex.Escape(key) + "\"\\s*:\\s*\"((?:[^\"\\\\_]|\\\\.)*)\"");
+        if (m.Success) return m.Groups[1].Value;
+        m = Regex.Match(obj, "\"" + Regex.Escape(key) + "\"\\s*:\\s*([^,}\\]\\s]+)");
+        if (m.Success) return m.Groups[1].Value.Trim();
+        return null;
+    }
+
+    static List&lt;string&gt; SplitJsonArray(string json)
+    {
+        var result = new List&lt;string&gt;();
+        json = json.Trim();
+        if (!json.StartsWith("[")) return result;
+        int depth = 0; int start = -1;
+        for (int i = 0; i &lt; json.Length; i++)
+        {
+            char c = json[i];
+            if (c == '{') { if (depth == 0) start = i; depth++; }
+            else if (c == '}') { depth--; if (depth == 0 &amp;&amp; start &gt;= 0) { result.Add(json.Substring(start, i - start + 1)); start = -1; } }
+        }
+        return result;
+    }
+
+    static string J(string s) { return (s ?? "").Replace("\\","\\\\").Replace("\"","\\\""); }
+
+    static void WLog(string type, string text)
+    {
+        try
+        {
+            string ts = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            File.AppendAllText(LOG_PATH, ts + " [BROADCAST|" + type + "] " + text + "\r\n", Encoding.UTF8);
+        }
+        catch { }
+    }
+
+    public bool Execute()
+    {
+        string rewardId = "";
+        if (args.ContainsKey("rewardId")) rewardId = args["rewardId"].ToString();
+        if (string.IsNullOrEmpty(rewardId) &amp;&amp; args.ContainsKey("id"))
+            rewardId = args["id"].ToString();
+
+        if (string.IsNullOrEmpty(rewardId))
+        {
+            CPH.LogError("VideoAlertBroadcast: rewardId порожній");
+            WLog("reward_miss", "rewardId відсутній в аргументах");
+            return true;
+        }
+
+        string alertsJson = CPH.GetGlobalVar&lt;string&gt;("videoAlertConfig", true);
+        if (string.IsNullOrEmpty(alertsJson))
+        {
+            CPH.LogError("VideoAlertBroadcast: videoAlertConfig порожній — запусти StartupLoadConfig");
+            WLog("reward_miss", "rewardId=" + rewardId + " | config порожній (StartupLoadConfig не запущено?)");
+            return true;
+        }
+
+        bool matched = false;
+
+        foreach (string a in SplitJsonArray(alertsJson))
+        {
+            string rid = GetJsonField(a, "rewardId");
+            if (rid == null || rid != rewardId) continue;
+
+            matched = true;
+
+            string videoUrl  = GetJsonField(a, "url")       ?? "";
+            string mediaType = GetJsonField(a, "mediaType") ?? "";
+            string name      = GetJsonField(a, "name")      ?? "";
+            string obsScene  = GetJsonField(a, "obsScene")  ?? "";
+            string obsSource = GetJsonField(a, "obsSource") ?? "";
+            string obsFilter = GetJsonField(a, "obsFilter") ?? "";
+            string ckRaw     = GetJsonField(a, "chromakey") ?? "false";
+            bool   chromakey = ckRaw.Trim().ToLower() == "true";
+            string stRaw     = GetJsonField(a, "showTimer") ?? "true";
+            bool   showTimer = stRaw.Trim().ToLower() != "false";
+            int    duration  = 10;
+            string durStr    = GetJsonField(a, "duration");
+            if (durStr != null) int.TryParse(durStr, out duration);
+
+            string userName = "";
+            if (args.ContainsKey("userName"))  userName = args["userName"].ToString();
+            else if (args.ContainsKey("user")) userName = args["user"].ToString();
+            string rewardName = "";
+            if (args.ContainsKey("rewardName")) rewardName = args["rewardName"].ToString();
+            else if (args.ContainsKey("reward")) rewardName = args["reward"].ToString();
+            string showNickRaw = CPH.GetGlobalVar&lt;string&gt;("videoAlertShowNick", true);
+            bool showNick = showNickRaw != null && showNickRaw.Trim().ToLower() == "true";
+
+            string payload = "{\"action\":\"VideoAlert\",\"data\":{"
+                + "\"videoUrl\":\""  + J(videoUrl)  + "\","
+                + "\"mediaType\":\""+ (string.IsNullOrEmpty(mediaType) ? "video" : J(mediaType)) + "\","
+                + "\"duration\":"   + duration      + ","
+                + "\"name\":\""     + J(name)       + "\","
+                + "\"rewardId\":\"" + J(rewardId)   + "\","
+                + "\"chromakey\":"  + (chromakey ? "true" : "false") + ","
+                + "\"showTimer\":"  + (showTimer  ? "true" : "false") + ","
+                + "\"obsScene\":\""  + J(obsScene)  + "\","
+                + "\"obsSource\":\"" + J(obsSource) + "\","
+                + "\"obsFilter\":\"" + J(obsFilter) + "\"," 
+                + "\"userName\":\"" + J(userName)  + "\","
+                + "\"showNickname\":" + (showNick ? "true" : "false") + ""
+                + "}}";
+
+            CPH.WebsocketBroadcastJson(payload);
+            WLog("reward_match", name + " | rewardId=" + rewardId + " | dur=" + duration + " | chromo " + (chromakey ? "ON" : "OFF"));
+
+            if (!string.IsNullOrEmpty(userName)) {
+                string sendChatRaw = CPH.GetGlobalVar&lt;string&gt;("videoAlertChatMsg", true);
+                bool sendChat = sendChatRaw != null &amp;&amp; sendChatRaw.Trim().ToLower() == "true";
+                if (sendChat) {
+                    string chatMsg = string.IsNullOrEmpty(rewardName)
+                        ? userName + " активував нагороду 🎬"
+                        : userName + " активував нагороду \"" + rewardName + "\" 🎬";
+                    CPH.SendMessage(chatMsg, true, true);
+                }
+            }
+            break;
+        }
+
+        if (!matched)
+            WLog("reward_miss", "rewardId=" + rewardId + " | не знайдено алерту з таким rewardId");
+
+        return true;
+    }
+}</code>
+
+            <strong>2. Action "VideoAlertTest"</strong> (для кнопки ▶ тест в адмін-панелі)<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+
+public class CPHInline
+{
+    static string J(string s) { return (s ?? "").Replace("\\","\\\\").Replace("\"","\\\""); }
+
+    public bool Execute()
+    {
+        string videoUrl  = args.ContainsKey("videoUrl")  ? args["videoUrl"].ToString()  : "";
+        string mediaType = args.ContainsKey("mediaType") ? args["mediaType"].ToString() : "";
+        string name      = args.ContainsKey("name")      ? args["name"].ToString()      : "Test";
+        string obsScene  = args.ContainsKey("obsScene")  ? args["obsScene"].ToString()  : "";
+        string obsSource = args.ContainsKey("obsSource") ? args["obsSource"].ToString() : "";
+        string obsFilter = args.ContainsKey("obsFilter") ? args["obsFilter"].ToString() : "Chroma Key";
+        bool   chromakey = args.ContainsKey("chromakey") &amp;&amp; args["chromakey"].ToString() == "true";
+        bool   showTimer = !args.ContainsKey("showTimer") || args["showTimer"].ToString() != "false";
+        int    duration  = 10;
+        if (args.ContainsKey("duration")) int.TryParse(args["duration"].ToString(), out duration);
+
+        if (string.IsNullOrEmpty(videoUrl)) return true;
+
+        string payload = "{\"action\":\"VideoAlert\",\"data\":{"
+            + "\"videoUrl\":\""  + J(videoUrl)  + "\","
+            + "\"mediaType\":\""+ (string.IsNullOrEmpty(mediaType) ? "video" : J(mediaType)) + "\","
+            + "\"duration\":" + duration + ","
+            + "\"name\":\""      + J(name)       + "\","
+            + "\"rewardId\":\"test\","
+            + "\"chromakey\":" + (chromakey ? "true" : "false") + ","
+            + "\"showTimer\":" + (showTimer ? "true" : "false") + ","
+            + "\"obsScene\":\""  + J(obsScene)   + "\","
+            + "\"obsSource\":\""  + J(obsSource)  + "\","
+            + "\"obsFilter\":\""  + J(obsFilter)  + "\""
+            + "}}";
+
+        CPH.WebsocketBroadcastJson(payload);
+        CPH.LogInfo("VideoAlertTest broadcast: " + name + " chromakey=" + chromakey + " showTimer=" + showTimer);
+        return true;
+    }
+}</code>
+
+            <strong>3. Action "ChromaKeyControl"</strong><br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (overlay викликає через HTTP).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+
+public class CPHInline
+{
+    public bool Execute()
+    {
+        string action    = args.ContainsKey("action")    ? args["action"].ToString()    : "";
+        string obsScene  = args.ContainsKey("obsScene")  ? args["obsScene"].ToString()  : "";
+        string obsSource = args.ContainsKey("obsSource") ? args["obsSource"].ToString() : "";
+        string obsFilter = args.ContainsKey("obsFilter") ? args["obsFilter"].ToString() : "Хромокей";
+
+        CPH.LogInfo("ChromaKeyControl: action='" + action + "' scene='" + obsScene + "' source='" + obsSource + "' filter='" + obsFilter + "'");
+
+        if (string.IsNullOrEmpty(obsSource)) {
+            CPH.LogError("ChromaKeyControl: obsSource порожній — не знаю на якому джерелі перемикати фільтр");
+            return true;
+        }
+        if (string.IsNullOrEmpty(obsFilter)) {
+            CPH.LogError("ChromaKeyControl: obsFilter порожній");
+            return true;
+        }
+
+        if (action == "show")
+        {
+            CPH.ObsShowFilter(obsScene, obsSource, obsFilter);
+            CPH.LogInfo("ChromaKeyControl: SHOW OK — filter='" + obsFilter + "' source='" + obsSource + "' scene='" + obsScene + "'");
+        }
+        else if (action == "hide")
+        {
+            CPH.ObsHideFilter(obsScene, obsSource, obsFilter);
+            CPH.LogInfo("ChromaKeyControl: HIDE OK — filter='" + obsFilter + "' source='" + obsSource + "' scene='" + obsScene + "'");
+        }
+        else
+        {
+            CPH.LogError("ChromaKeyControl: невідома дія '" + action + "'. Має бути 'show' або 'hide'");
+        }
+
+        return true;
+    }
+}</code>
+
+            <strong>4. Action "SetVideoAlertConfig"</strong> (синхронізація конфігу)<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+
+public class CPHInline
+{
+    public bool Execute()
+    {
+        string configJson = args.ContainsKey("config") ? args["config"].ToString() : "";
+
+        if (string.IsNullOrEmpty(configJson)) {
+            CPH.LogError("SetVideoAlertConfig: config parameter is empty");
+            return false;
+        }
+
+        CPH.SetGlobalVar("videoAlertConfig", configJson, true);
+        CPH.LogInfo("videoAlertConfig updated from admin panel");
+        return true;
+    }
+}</code>
+
+            <strong>5. Action "StartupLoadConfig"</strong> ⭐ — читає конфіг з overlay.html при старті SB і рефрешить Browser Source в OBS<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: <code>Core → Streamer.bot Started</code>.<br>
+            <small style="color:#aaa">⚠️ Змінити <code>AlertReward</code> на точну назву твого Browser Source в OBS</small><br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading;
+
+public class CPHInline
+{
+    static readonly HttpClient http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+
+    public bool Execute()
+    {
+        const string overlayUrl = "http://127.0.0.1:7474/reward/overlay.html";
+        const string indexUrl   = "http://127.0.0.1:7474/reward/index.html";
+
+        // ── 1. Читаємо overlay.html через HTTP ───────────────────────
+        CPH.LogInfo("StartupLoadConfig: читаємо → " + overlayUrl);
+
+        string html;
+        try
+        {
+            html = http.GetStringAsync(overlayUrl).Result;
+        }
+        catch (Exception ex)
+        {
+            CPH.LogError("StartupLoadConfig: не вдалось завантажити overlay.html — " + ex.Message);
+            CPH.LogError("Переконайся що SB HTTP Server запущено на порту 7474 і mapping 'reward' налаштовано");
+            return false;
+        }
+
+        // ── 2. Витягуємо конфіг між маркерами ───────────────────────
+        var m = Regex.Match(html, @"/\*ALERTS_JSON\*/(.*?)/\*END_ALERTS_JSON\*/",
+                            RegexOptions.Singleline);
+        if (!m.Success)
+        {
+            CPH.LogError("StartupLoadConfig: маркери ALERTS_JSON не знайдено в overlay.html!");
+            return false;
+        }
+
+        string configJson = m.Groups[1].Value.Trim();
+
+        if (configJson == "[]" || string.IsNullOrEmpty(configJson))
+        {
+            CPH.LogWarn("StartupLoadConfig: конфіг порожній — відкрий index.html і збережи алерти!");
+            return false;
+        }
+
+        // ── 3. Зберігаємо в SB globalVar ────────────────────────────
+        CPH.SetGlobalVar("videoAlertConfig", configJson, true);
+        CPH.LogInfo("StartupLoadConfig: ✓ конфіг відновлено (" + configJson.Length + " chars)");
+
+        // ── 4. Перевіряємо index.html доступність ───────────────────
+        try
+        {
+            var res = http.SendAsync(new HttpRequestMessage(HttpMethod.Head, indexUrl)).Result;
+            CPH.LogInfo("StartupLoadConfig: index.html → HTTP " + (int)res.StatusCode);
+        }
+        catch
+        {
+            CPH.LogWarn("StartupLoadConfig: index.html недоступний (не критично)");
+        }
+
+        // ── 5. Чекаємо OBS (макс 15с) ───────────────────────────────
+        CPH.LogInfo("StartupLoadConfig: чекаємо OBS...");
+        int waited = 0;
+        while (!CPH.ObsIsConnected() &amp;&amp; waited &lt; 15000)
+        {
+            Thread.Sleep(500);
+            waited += 500;
+        }
+
+        if (!CPH.ObsIsConnected())
+        {
+            CPH.LogWarn("StartupLoadConfig: OBS не підключився за 15с — рефреш пропущено");
+            return true;
+        }
+
+        CPH.LogInfo("StartupLoadConfig: OBS підключено ✓");
+
+        // ── 6. Рефрешимо Browser Source в OBS ───────────────────────
+        // Змінити назви під свої Browser Sources в OBS!
+        string[] sources = { "AlertReward" };
+
+        foreach (string src in sources)
+        {
+            try
+            {
+                string req  = "{\"inputName\":\"" + src + "\",\"propertyName\":\"refreshnocache\"}";
+                string resp = CPH.ObsSendRaw("PressInputPropertiesButton", req);
+                CPH.LogInfo("StartupLoadConfig: рефреш '" + src + "' → " + (resp ?? "null"));
+            }
+            catch (Exception ex)
+            {
+                CPH.LogWarn("StartupLoadConfig: рефреш '" + src + "' FAIL — " + ex.Message);
+            }
+        }
+
+        CPH.LogInfo("StartupLoadConfig: ✓ готово");
+        return true;
+    }
+}</code>
+
+            <strong>6. Action "WriteLog"</strong> 📝 — записує спільний лог файл для overlay і адмін-панелі<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через WS DoAction).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+using System.IO;
+using System.Text;
+
+public class CPHInline
+{
+    const string LOG_PATH  = @"D:\Program\obs\Obs Twich Reward\alerts.log";
+    const long   MAX_BYTES = 10 * 1024 * 1024;
+
+    public bool Execute()
+    {
+        string src  = "?";
+        string type = "log";
+        string text = "";
+
+        // ── Формат overlay: { source="OVERLAY", type="alert_start", name="...", ... } ──
+        if (args.ContainsKey("source"))
+        {
+            src  = args["source"].ToString();
+            type = args.ContainsKey("type") ? args["type"].ToString().ToLower() : "log";
+
+            // Пишемо ЛИШЕ коли дія виконується: старт / кінець / помилка
+            if (type != "alert_start" &amp;&amp; type != "alert_end" &amp;&amp; type != "error")
+                return true;
+
+            string name    = args.ContainsKey("name")      ? args["name"].ToString()     : "";
+            string rid     = args.ContainsKey("rewardId") ? args["rewardId"].ToString() : "";
+            string dur     = args.ContainsKey("duration") ? args["duration"].ToString() : "";
+            string chromo  = args.ContainsKey("chromakey")
+                             ? (args["chromakey"].ToString().ToLower() == "true" ? "chromo ON" : "chromo OFF")
+                             : "";
+            string message = args.ContainsKey("message")  ? args["message"].ToString()  : "";
+
+            text = name;
+            if (!string.IsNullOrEmpty(rid))     text += " | rewardId=" + rid;
+            if (!string.IsNullOrEmpty(dur))     text += " | dur="      + dur;
+            if (!string.IsNullOrEmpty(chromo))  text += " | "          + chromo;
+            // Для type=error: показуємо message якщо name порожній
+            if (string.IsNullOrEmpty(text) &amp;&amp; !string.IsNullOrEmpty(message)) text = message;
+            if (string.IsNullOrEmpty(text))     text = type;
+        }
+        // ── Формат index: { message="SOURCE|type|text" } ──
+        else if (args.ContainsKey("message"))
+        {
+            string raw = args["message"].ToString();
+            if (string.IsNullOrEmpty(raw)) return true;
+
+            string[] parts = raw.Split(new[] { '|' }, 3);
+            src  = parts.Length > 0 ? parts[0] : "?";
+            type = parts.Length > 1 ? parts[1].ToLower() : "log";
+            text = parts.Length > 2 ? parts[2] : (parts.Length > 1 ? parts[1] : raw);
+        }
+        else
+        {
+            return true; // нема аргументів — нічого не писати
+        }
+
+        try
+        {
+            // ── Ротація ──────────────────────────────────────────────────
+            if (File.Exists(LOG_PATH) &amp;&amp; new FileInfo(LOG_PATH).Length &gt; MAX_BYTES)
+            {
+                string archive = Path.Combine(
+                    Path.GetDirectoryName(LOG_PATH),
+                    "alerts_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".log");
+                File.Move(LOG_PATH, archive);
+            }
+
+            string ts   = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string line = ts + " [" + src + "|" + type + "] " + text;
+
+            File.AppendAllText(LOG_PATH, line + "\r\n", Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            CPH.LogError("WriteLog: " + ex.Message);
+        }
+
+        return true;
+    }
+}</code>
+
+            <strong>7. Action "ExportAlerts"</strong> 💾 — зберігає backup поряд з index.html<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+using System.IO;
+using System.Text;
+
+public class CPHInline
+{
+    // Змінити на шлях до папки де лежать index.html / overlay.html
+    const string FOLDER = @"D:\Program\obs\Obs Twich Reward\reward\";
+
+    public bool Execute()
+    {
+        string json = args.ContainsKey("json") ? args["json"].ToString() : "";
+        if (string.IsNullOrEmpty(json)) {
+            CPH.LogError("ExportAlerts: json порожній");
+            return false;
+        }
+        try {
+            string path = Path.Combine(FOLDER, "video-alerts-backup.json");
+            File.WriteAllText(path, json, Encoding.UTF8);
+            CPH.LogInfo("ExportAlerts: збережено → " + path);
+            return true;
+        } catch (Exception ex) {
+            CPH.LogError("ExportAlerts: " + ex.Message);
+            return false;
+        }
+    }
+}</code>
+
+            <strong>8. Action "ImportAlerts"</strong> 📂 — читає backup і повертає в overlay<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+using System.IO;
+using System.Text;
+
+public class CPHInline
+{
+    const string FOLDER = @"D:\Program\obs\Obs Twich Reward\reward\";
+
+    public bool Execute()
+    {
+        try {
+            string path = Path.Combine(FOLDER, "video-alerts-backup.json");
+            if (!File.Exists(path)) {
+                CPH.LogError("ImportAlerts: файл не знайдено → " + path);
+                CPH.SetGlobalVar("importAlertsResult", "", false);
+                return false;
+            }
+            string json = File.ReadAllText(path, Encoding.UTF8);
+            CPH.SetGlobalVar("importAlertsResult", json, false);
+            CPH.LogInfo("ImportAlerts: прочитано " + json.Length + " chars");
+            return true;
+        } catch (Exception ex) {
+            CPH.LogError("ImportAlerts: " + ex.Message);
+            CPH.SetGlobalVar("importAlertsResult", "", false);
+            return false;
+        }
+    }
+}</code>
+
+            <strong>9. Action "SetChatMsgConfig"</strong> 💬 — вмикає/вимикає надсилання повідомлення в чат<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP/WS з index.html).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+
+public class CPHInline
+{
+    public bool Execute()
+    {
+        string enabled = args.ContainsKey("enabled") ? args["enabled"].ToString() : "false";
+        CPH.SetGlobalVar("videoAlertChatMsg", enabled, true);
+        CPH.LogInfo("SetChatMsgConfig: videoAlertChatMsg=" + enabled);
+        return true;
+    }
+}</code>
+
+            <strong>10. Action "SetNicknameConfig"</strong> 👤 — вмикає/вимикає показ нікнейму в overlay<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого.<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+
+public class CPHInline
+{
+    public bool Execute()
+    {
+        string enabled = args.ContainsKey("enabled") ? args["enabled"].ToString() : "false";
+        CPH.SetGlobalVar("videoAlertShowNick", enabled, true);
+        CPH.LogInfo("SetNicknameConfig: videoAlertShowNick=" + enabled);
+        return true;
+    }
+}</code>
+
+            <strong>11. Action "ClearAlerts"</strong> 🧹 — очищає список нагород (скидає globalVar конфіг)<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP з index.html).<br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+
+public class CPHInline
+{
+    public bool Execute()
+    {
+        CPH.SetGlobalVar("videoAlertConfig", "[]", true);
+        CPH.LogInfo("ClearAlerts: список нагород очищено");
+        return true;
+    }
+}</code>
+
+            <strong>12. WebSocket Server</strong> — увімкнений (127.0.0.1:8080)<br>
+            <strong>12. HTTP Server</strong> — увімкнений (127.0.0.1:7474) + mapping <code>reward</code> → папка з файлами<br>
+            <strong>server.js НЕ потрібен</strong> — конфіг оновлюється через WS broadcast живо 🎉
+        </details>
+    </div>
+
+    <div class="grid">
+
+        <!-- LEFT: Form -->
+        <div class="card">
+            <h2>➕ <span id="formTitle">Додати алерт</span><span id="editingBadge"></span></h2>
+
+            <div class="form-group">
+                <label>Назва алерту</label>
+                <input type="text" id="alertName" placeholder="Наприклад: Epic Win">
+            </div>
+
+            <div class="form-group">
+                <label>URL медіа (MP4 / WebM / MP3)</label>
+                <input type="url" id="videoUrl" placeholder="http://127.0.0.1:7474/streamerbot-overlay/video.mp4" oninput="onMediaUrlChange(this.value)">
+                <small id="mediaTypeHint" style="display:none;margin-top:4px;font-size:0.8em"></small>
+            </div>
+
+            <div class="form-group">
+                <label>Тривалість показу (секунди)</label>
+                <input type="number" id="duration" min="1" max="120" value="10">
+            </div>
+
+            <div class="form-group">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.9em">
+                    <span style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
+                        <input type="checkbox" id="chromakey" style="opacity:0;width:0;height:0;position:absolute">
+                        <span id="chromakeyTrack" style="position:absolute;inset:0;border-radius:24px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);transition:background 0.2s"></span>
+                        <span id="chromakeyThumb" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#aaa;transition:transform 0.2s,background 0.2s"></span>
+                    </span>
+                    <span>
+                        🟩 Хромакей (керування фільтром в OBS)
+                        <small style="display:block;color:#888;font-size:0.8em;font-weight:400">Вмикає/вимикає фільтр "Chroma Key" на джерелі в OBS через Streamer.bot</small>
+                    </span>
+                </label>
+            </div>
+
+            <div id="chromakeyFields" style="display:none">
+                <div class="form-group" style="margin-left:4px;padding-left:14px;border-left:2px solid rgba(40,167,69,0.4)">
+                    <label>OBS Сцена</label>
+                    <input type="text" id="obsScene" placeholder="Наприклад: ВІДЖЕТИ або залиш пусто">
+                </div>
+                <div class="form-group" style="margin-left:4px;padding-left:14px;border-left:2px solid rgba(40,167,69,0.4)">
+                    <label>OBS Джерело (Source)</label>
+                    <input type="text" id="obsSource" placeholder="Наприклад: AlertReward">
+                </div>
+                <div class="form-group" style="margin-left:4px;padding-left:14px;border-left:2px solid rgba(40,167,69,0.4)">
+                    <label>Назва фільтру в OBS</label>
+                    <input type="text" id="obsFilter" placeholder="Chroma Key" value="Chroma Key">
+                    <small style="color:#ffc107;font-size:0.8em;display:block;margin-top:4px">⚠️ Точна назва як в OBS! Укр: <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">Хромакей</code>, Англ: <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">Chroma Key</code></small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.9em">
+                    <span style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
+                        <input type="checkbox" id="showTimer" checked style="opacity:0;width:0;height:0;position:absolute">
+                        <span id="showTimerTrack" style="position:absolute;inset:0;border-radius:24px;background:rgba(59,130,246,0.5);border:1px solid rgba(59,130,246,0.7);transition:background 0.2s"></span>
+                        <span id="showTimerThumb" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#60a5fa;transition:transform 0.2s,background 0.2s;transform:translateX(18px)"></span>
+                    </span>
+                    <span>
+                        ⏱️ Показувати таймер відліку
+                        <small style="display:block;color:#888;font-size:0.8em;font-weight:400">Цифра в кутку екрану під час алерту</small>
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>ID Нагороди</label>
+                <input type="text" id="manualRewardId" placeholder="Вставте ID Reward з Twitch Creator Dashboard">
+                <small style="color:#888;font-size:0.8em;display:block;margin-top:4px">Обов'язкове поле — ID нагороди з Twitch (напр: <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">a1b2c3d4-...</code>)</small>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn-primary" onclick="saveAlert()">💾 Зберегти</button>
+                <button class="btn-secondary" onclick="cancelEdit()">✖ Скасувати</button>
+                <button class="btn-test" onclick="testOverlayPreview()">▶ Тест медіа</button>
+            </div>
+
+            <div class="preview-box" id="previewBox">
+                <span id="previewPlaceholder">📹 Прев'ю медіа</span>
+                <video id="previewVideo" style="display:none;width:100%;height:100%;object-fit:contain" controls></video>
+                <audio id="previewAudio" style="display:none;width:100%" controls></audio>
+            </div>
+        </div>
+
+        <!-- RIGHT: Configured alerts -->
+        <div class="card">
+            <h2>📋 Налаштовані алерти</h2>
+
+            <!-- NICKNAME TOGGLE -->
+            <div class="chat-toggle-bar compact">
+                <span style="font-size:1.05em">👤</span>
+                <div class="chat-toggle-label">
+                    <strong>Показувати нікнейм на екрані при активації нагороди</strong>
+                    <small>Якщо увімкнено — під час відео показується ім'я користувача знизу екрану</small>
+                </div>
+                <span id="nickBadge" class="chat-status-badge off">🔇 Вимкнено</span>
+                <label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer" title="Перемкнути показ нікнейму">
+                    <input type="checkbox" id="nickToggle" style="opacity:0;width:0;height:0;position:absolute" onchange="onNickToggle(this.checked)">
+                    <span id="nickTrack" style="position:absolute;inset:0;border-radius:22px;transition:background 0.2s,border-color 0.2s;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)"></span>
+                    <span id="nickThumb" style="position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px)"></span>
+                </label>
+            </div>
+
+            <!-- Sync status -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+                <span id="syncBadge" class="sync-badge">⏳ Очікування WS...</span>
+                <button onclick="manualSync()" class="btn-secondary" style="padding:5px 12px;font-size:0.78em">🔄 Синхронізувати</button>
+            </div>
+
+            <div style="font-size:0.78em;color:#666;line-height:1.5;margin-bottom:14px;padding:10px 12px;background:rgba(102,126,234,0.07);border-radius:8px;border:1px solid rgba(102,126,234,0.15)">
+                💡 Конфіг оновлюється <strong style="color:#8fa3f5">автоматично</strong> при кожному збереженні — overlay отримує зміни на живо, без перезавантаження.<br>
+                <span style="color:#555"></span>
+            </div>
+
+            <!-- Quick-test кнопка для відправки ConfigUpdate без зміни алертів -->
+            <button onclick="quickTest(null)" style="display:none" id="btnBroadcastAll"></button>
+
+            <!-- Import / Export -->
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+                <button class="btn-export" onclick="exportAlerts()">📤 Експорт</button>
+                <button class="btn-import" onclick="importAlertsSB()">📥 Імпорт</button>
+                <span style="color:#555;font-size:0.75em">або</span>
+                <button class="btn-import" style="font-size:0.78em;padding:5px 10px;opacity:0.7" onclick="document.getElementById('importFile').click()" title="Вибрати файл вручну">📁 з файлу</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importFromFile(event)">
+                <button class="btn-clear-all" onclick="clearAllAlerts()" title="Очистити весь список нагород">🧹 Очистити список</button>
+            </div>
+
+
+            <!-- Search -->
+            <div class="search-wrapper">
+                <input type="text" class="search-input" id="alertSearch"
+                       placeholder="🔍 Пошук за назвою або Reward ID..."
+                       oninput="onSearchInput(this.value)">
+                <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Очистити">✕</button>
+            </div>
+
+            <!-- Queue status -->
+            <div class="queue-panel q-hidden" id="queuePanel">
+                <div class="queue-panel-header">
+                    <span>⚡ Відтворення в overlay</span>
+                    <span class="queue-badge" id="queueBadge">0</span>
+                </div>
+                <div id="qNow"></div>
+                <div class="queue-progress" id="qProgWrap" style="display:none">
+                    <div class="queue-progress-bar" id="qProgBar" style="width:100%"></div>
+                </div>
+                <div id="qList"></div>
+            </div>
+
+            <div id="alertsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <p>Алерти ще не додані.<br>Додайте перший алерт зліва.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// =====================================================================
+// CONFIG
+// =====================================================================
+const WS_URL   = 'ws://127.0.0.1:8080/';
+const HTTP_URL = 'http://127.0.0.1:7474';
+
+// =====================================================================
+// STATE
+// =====================================================================
+let ws          = null;
+let wsConnected = false;
+let alerts      = [];
+let editingId   = null;
+let sendChatMsg   = localStorage.getItem('sendChatMsg')   === 'true';
+let showNickname  = localStorage.getItem('showNickname')  === 'true';
+
+// =====================================================================
+// INIT
+// =====================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    loadAlerts();
+    connectWebSocket();
+
+    // ── Chat msg toggle ──────────────────────────────────────
+    const chatToggleEl = document.getElementById('chatMsgToggle');
+    if (chatToggleEl) {
+        chatToggleEl.checked = sendChatMsg;
+        applyChatMsgToggleUI(sendChatMsg);
+        setTimeout(() => syncChatMsgSetting(sendChatMsg), 1500);
+    }
+
+    // ── Nickname toggle ───────────────────────────────────────
+    const nickToggleEl = document.getElementById('nickToggle');
+    if (nickToggleEl) {
+        nickToggleEl.checked = showNickname;
+        applyNickToggleUI(showNickname);
+        setTimeout(() => syncNicknameSetting(showNickname), 1500);
+    }
+
+    const ck = document.getElementById('chromakey');
+    if (ck) {
+        ck.addEventListener('change', () => updateChromakeyToggle(ck.checked));
+        updateChromakeyToggle(false);
+    }
+
+    const st = document.getElementById('showTimer');
+    if (st) {
+        st.addEventListener('change', () => updateShowTimerToggle(st.checked));
+        updateShowTimerToggle(true);
+    }
+
+    // Ініціалізуємо hint якщо поле вже заповнене
+    const urlEl = document.getElementById('videoUrl');
+    if (urlEl && urlEl.value) onMediaUrlChange(urlEl.value);
+
+    // Закривати модалку по Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeConfirmModal();
+    });
+
+    // Автоматична синхронізація при завантаженні / рефреші сторінки
+    if (alerts.length > 0) {
+        setSyncBadge('syncing', '⏳ Авто-синхронізація...');
+        setTimeout(() => {
+            syncConfigToSB({ silent: true }).then(ok => {
+                if (ok) toast('🔄 Конфіг автоматично синхронізовано', 'success');
+            });
+        }, 1000);
+    }
+});
+
+// =====================================================================
+// WEBSOCKET — лише для читання redemption подій
+// =====================================================================
+function connectWebSocket() {
+    try {
+        ws = new WebSocket(WS_URL);
+
+        ws.onopen = () => {
+            wsConnected = true;
+            setStatus(true, 'Підключено до Streamer.bot');
+            setSyncBadge('synced', '🟢 WS підключено');
+
+            ws.send(JSON.stringify({
+                request: 'Subscribe',
+                id: 'admin-sub',
+                events: {
+                    Twitch: ['ChannelPointsRewardRedemption']
+                }
+            }));
+        };
+
+        ws.onmessage = (e) => {
+            try { handleMessage(JSON.parse(e.data)); } catch(_) {}
+        };
+
+        ws.onerror = () => {
+            wsConnected = false;
+            setStatus(false, 'Помилка підключення');
+            setSyncBadge('error', '❌ WS помилка');
+        };
+
+        ws.onclose = () => {
+            wsConnected = false;
+            setStatus(false, 'Відключено — повторне підключення...');
+            setSyncBadge('error', '🔴 WS відключено');
+            setTimeout(connectWebSocket, 4000);
+        };
+
+    } catch(_) {
+        wsConnected = false;
+        setStatus(false, 'Не вдалося підключитись');
+        setTimeout(connectWebSocket, 4000);
+    }
+}
+
+// =====================================================================
+// ОБРОБКА WS ПОВІДОМЛЕНЬ
+// =====================================================================
+function handleMessage(data) {
+    if (data.event?.type === 'ChannelPointsRewardRedemption') {
+        const d = data.data || {};
+        const rewardId = d.reward?.id || d.rewardId || '';
+        const title    = d.reward?.title || d.rewardName || rewardId || '?';
+        toast(`🎁 Активовано: ${title}`, 'info');
+
+        // Додаємо в трекер черги
+        const matched = alerts.find(a => String(a.rewardId).trim() === String(rewardId).trim());
+        if (matched) enqueuePlayback(matched);
+    }
+}
+
+// =====================================================================
+// ЗБЕРЕЖЕННЯ АЛЕРТУ
+// =====================================================================
+function saveAlert() {
+    try {
+        const getVal = (id) => {
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        };
+
+        const name        = getVal('alertName');
+        const url         = getVal('videoUrl');
+        const mediaType   = getMediaType(url);
+        const duration    = parseInt(getVal('duration')) || 10;
+        const rewardId    = getVal('manualRewardId');
+        const rewardName  = rewardId ? `Custom: ${rewardId}` : '';
+        const chromakey   = document.getElementById('chromakey')?.checked ?? false;
+        const showTimer   = document.getElementById('showTimer')?.checked ?? true;
+        const obsScene    = getVal('obsScene');
+        const obsSource   = getVal('obsSource');
+        const obsFilter   = getVal('obsFilter') || 'Chroma Key';
+
+        if (!name)     { toast('⚠️ Введіть назву алерту', 'error'); return; }
+        if (!url)      { toast('⚠️ Введіть URL відео', 'error'); return; }
+
+        if (editingId !== null) {
+            const idx = alerts.findIndex(a => a.id === editingId);
+            if (idx !== -1) {
+                alerts[idx] = { ...alerts[idx], name, url, mediaType, duration, rewardId, rewardName, chromakey, showTimer, obsScene, obsSource, obsFilter };
+                toast('✅ Алерт оновлено', 'success');
+            }
+        } else {
+            alerts.push({
+                id: Date.now(),
+                name, url, mediaType, duration, rewardId, rewardName,
+                chromakey, showTimer, obsScene, obsSource, obsFilter,
+                createdAt: new Date().toISOString()
+            });
+            toast('✅ Алерт додано', 'success');
+        }
+
+        saveAlerts();
+        renderAlerts();
+        clearForm();
+
+        // Синхронізуємо конфіг через HTTP → SB globalVar + WS broadcast → overlay
+        syncConfigToSB().catch(err => console.error('syncConfigToSB error:', err));
+
+    } catch(err) {
+        console.error('saveAlert error:', err);
+        toast('❌ Помилка збереження: ' + err.message, 'error');
+    }
+}
+
+// =====================================================================
+// СИНХРОНІЗАЦІЯ КОНФІГУ в Streamer.bot
+// Викликає SetVideoAlertConfig → зберігає globalVar + broadcast ConfigUpdate → overlay
+// =====================================================================
+async function syncConfigToSB({ silent = false } = {}) {
+    const configJson = JSON.stringify(alerts);
+
+    setSyncBadge('syncing', '⏳ Синхронізація...');
+
+    // Спробуємо через HTTP DoAction
+    try {
+        const res = await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: { name: 'SetVideoAlertConfig', group: '' },
+                args: { config: configJson }
+            }),
+            signal: AbortSignal.timeout(4000)
+        });
+
+        if (res.ok) {
+            setSyncBadge('synced', `✅ Синхронізовано (${alerts.length} алертів)`);
+            if (!silent) toast('✅ Конфіг надіслано в Streamer.bot → overlay оновлено', 'success');
+            wlog('config', `⚙️ Синхронізовано (${alerts.length} алертів)`);
+            return true;
+        }
+        throw new Error('HTTP ' + res.status);
+
+    } catch(err) {
+        // Якщо HTTP недоступний — шлемо ConfigUpdate напряму через WS broadcast
+        // (тільки якщо SB підтримує WebsocketBroadcastJson від клієнта — зазвичай ні,
+        //  але залишаємо як fallback hint)
+        setSyncBadge('error', '⚠️ HTTP SB недоступний');
+        if (!silent) toast('⚠️ SB HTTP недоступний — переконайся що HTTP Server запущено на порту 7474', 'error');
+        console.warn('syncConfigToSB HTTP error:', err);
+        return false;
+    }
+}
+
+// Ручна синхронізація (кнопка)
+async function manualSync() {
+    if (alerts.length === 0) {
+        toast('⚠️ Немає алертів для синхронізації', 'error');
+        return;
+    }
+    await syncConfigToSB({ silent: false });
+}
+
+// =====================================================================
+// QUICK TEST — надіслати алерт через HTTP → SB → broadcast
+// =====================================================================
+async function quickTest(id) {
+    const a = alerts.find(x => x.id === id);
+    if (!a) return;
+
+    let sent = false;
+
+    // Спробуємо через VideoAlertTest action
+    try {
+        const res = await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: { name: 'VideoAlertTest', group: '' },
+                args: {
+                    videoUrl:  a.url,
+                    mediaType: a.mediaType || getMediaType(a.url),
+                    duration:  String(a.duration),
+                    name:      a.name,
+                    chromakey: a.chromakey ? 'true' : 'false',
+                    showTimer: a.showTimer !== false ? 'true' : 'false',
+                    obsScene:  a.obsScene  || '',
+                    obsSource: a.obsSource || '',
+                    obsFilter: a.obsFilter || 'Chroma Key'
+                }
+            }),
+            signal: AbortSignal.timeout(4000)
+        });
+        sent = res.ok;
+    } catch(_) {}
+
+    if (sent) {
+        toast(`▶ Тест відправлено: ${a.name}`, 'success');
+    } else {
+        toast(`❌ Не вдалось — перевір SB HTTP Server (порт 7474)`, 'error');
+    }
+}
+
+// =====================================================================
+// TOGGLE UI
+// =====================================================================
+function updateChromakeyToggle(checked) {
+    const track  = document.getElementById('chromakeyTrack');
+    const thumb  = document.getElementById('chromakeyThumb');
+    const fields = document.getElementById('chromakeyFields');
+    if (track) {
+        track.style.background  = checked ? 'rgba(40,167,69,0.5)'  : 'rgba(255,255,255,0.12)';
+        track.style.borderColor = checked ? 'rgba(40,167,69,0.7)' : 'rgba(255,255,255,0.2)';
+    }
+    if (thumb) {
+        thumb.style.transform  = checked ? 'translateX(18px)' : 'translateX(0)';
+        thumb.style.background = checked ? '#5be58b'          : '#aaa';
+    }
+    if (fields) fields.style.display = checked ? 'block' : 'none';
+}
+
+function updateShowTimerToggle(checked) {
+    const track = document.getElementById('showTimerTrack');
+    const thumb = document.getElementById('showTimerThumb');
+    if (track) {
+        track.style.background  = checked ? 'rgba(59,130,246,0.5)'  : 'rgba(255,255,255,0.12)';
+        track.style.borderColor = checked ? 'rgba(59,130,246,0.7)'  : 'rgba(255,255,255,0.2)';
+    }
+    if (thumb) {
+        thumb.style.transform  = checked ? 'translateX(18px)' : 'translateX(0)';
+        thumb.style.background = checked ? '#60a5fa'           : '#aaa';
+    }
+}
+
+// =====================================================================
+// ЕКСПОРТ / ІМПОРТ
+// =====================================================================
+// =====================================================================
+// EXPORT via SB (записує файл поряд з index.html через C#)
+// =====================================================================
+async function exportAlerts() {
+    if (alerts.length === 0) {
+        toast('⚠️ Немає алертів для експорту', 'error');
+        return;
+    }
+
+    const json = JSON.stringify(alerts, null, 2);
+
+    // --- Спроба 1: через SB action ExportAlerts (зберігає файл на диск) ---
+    try {
+        const res = await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: { name: 'ExportAlerts', group: '' },
+                args:   { json }
+            }),
+            signal: AbortSignal.timeout(4000)
+        });
+        if (res.ok) {
+            toast('✅ Збережено video-alerts-backup.json поряд з index.html', 'success');
+            return;
+        }
+    } catch(_) {}
+
+    // --- Спроба 2: fallback — скачати через браузер у Downloads ---
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href     = url;
+    a.download = `video-alerts-${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ SB недоступний — файл скачано у Downloads', 'info');
+}
+
+// =====================================================================
+// IMPORT via SB (читає файл поряд з index.html через C#)
+// =====================================================================
+async function importAlertsSB() {
+    toast('⏳ Читаємо файл з диску...', 'info');
+
+    let json = null;
+    try {
+        const res = await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: { name: 'ImportAlerts', group: '' },
+                args:   {}
+            }),
+            signal: AbortSignal.timeout(5000)
+        });
+        if (res.ok) {
+            // SB повертає JSON через глобальну змінну — читаємо її
+            await new Promise(r => setTimeout(r, 400));
+            const gr = await fetch(`${HTTP_URL}/GetGlobalVar?varName=importAlertsResult&persisted=false`,
+                { signal: AbortSignal.timeout(3000) });
+            if (gr.ok) {
+                const data = await gr.json();
+                json = data?.value || data?.Value || null;
+            }
+        }
+    } catch(_) {}
+
+    if (!json) {
+        toast('⚠️ SB не відповів або файл не знайдено — спробуй "з файлу"', 'error');
+        return;
+    }
+
+    applyImportedJson(json);
+}
+
+// Імпорт через вибір файлу (fallback)
+function importFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    const reader = new FileReader();
+    reader.onload = (e) => applyImportedJson(e.target.result);
+    reader.readAsText(file);
+}
+
+// Спільна логіка застосування імпортованого JSON
+function applyImportedJson(raw) {
+    let parsed;
+    try {
+        parsed = JSON.parse(raw);
+    } catch(_) {
+        toast('❌ Файл пошкоджений або не є JSON', 'error');
+        return;
+    }
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+        toast('❌ JSON не містить алертів (очікується масив)', 'error');
+        return;
+    }
+
+    const valid = parsed.filter(a => a && typeof a === 'object' && a.name && a.url);
+    if (valid.length === 0) {
+        toast('❌ Жоден запис не має обов\u0027язкових полів (name, url)', 'error');
+        return;
+    }
+
+    const existing = alerts.length;
+    if (existing > 0) {
+        const merge = confirm(
+            `Знайдено ${valid.length} алертів у файлі.\n\n` +
+            `OK — об\u0027єднати з поточними (${existing} шт.)\n` +
+            `Скасувати — замінити всі поточні`
+        );
+        if (merge) {
+            let added = 0;
+            valid.forEach(imp => {
+                const dup = alerts.find(a =>
+                    (imp.rewardId && a.rewardId === imp.rewardId) ||
+                    (imp.url && a.url === imp.url)
+                );
+                if (!dup) {
+                    alerts.push({ ...imp, id: Date.now() + Math.random() });
+                    added++;
+                }
+            });
+            toast(`✅ Додано ${added} нових (${valid.length - added} дублів пропущено)`, 'success');
+        } else {
+            alerts = valid.map(a => ({ ...a, id: a.id || Date.now() + Math.random() }));
+            toast(`✅ Замінено: ${alerts.length} алертів завантажено`, 'success');
+        }
+    } else {
+        alerts = valid.map(a => ({ ...a, id: a.id || Date.now() + Math.random() }));
+        toast(`✅ Імпортовано ${alerts.length} алертів`, 'success');
+    }
+
+    saveAlerts();
+    renderAlerts();
+    syncConfigToSB({ silent: true });
+}
+
+// =====================================================================
+// LOCALSTORAGE
+// =====================================================================
+function saveAlerts() {
+    localStorage.setItem('videoAlerts', JSON.stringify(alerts));
+}
+
+function loadAlerts() {
+    try { alerts = JSON.parse(localStorage.getItem('videoAlerts') || '[]'); }
+    catch(_) { alerts = []; }
+    renderAlerts();
+}
+
+// =====================================================================
+// ПРЕВ'Ю відео (локально в браузері — не надсилає в overlay)
+// =====================================================================
+function getMediaType(url) {
+    if (!url) return 'unknown';
+    const ext = url.split('?')[0].split('.').pop().toLowerCase();
+    if (['mp3','wav','ogg','flac','aac','m4a'].includes(ext)) return 'audio';
+    if (['mp4','webm','mov','avi','mkv'].includes(ext)) return 'video';
+    return 'video'; // за замовчуванням відео
+}
+
+function onMediaUrlChange(url) {
+    const hint = document.getElementById('mediaTypeHint');
+    if (!hint) return;
+    if (!url) { hint.style.display = 'none'; return; }
+    const type = getMediaType(url);
+    if (type === 'audio') {
+        hint.style.display = 'block';
+        hint.style.color = '#60a5fa';
+        hint.textContent = '🎵 Визначено: аудіо файл (MP3/WAV/OGG)';
+    } else {
+        hint.style.display = 'block';
+        hint.style.color = '#5be58b';
+        hint.textContent = '🎬 Визначено: відео файл (MP4/WebM)';
+    }
+}
+
+function resolveMediaUrl(url) {
+    if (!url) return url;
+    // GitHub /raw/ → raw.githubusercontent.com (уникаємо 302 редиректу в браузері)
+    let m = url.match(/^https?:\/\/github\.com\/([^/]+\/[^/]+)\/raw\/(.+)$/);
+    if (m) {
+        const path = m[2].replace(/,/g, '%2C').replace(/;/g, '%3B');
+        return 'https://raw.githubusercontent.com/' + m[1] + '/' + path;
+    }
+    // Dropbox
+    if (/dropbox\.com/.test(url)) {
+        const base = url.replace(/[?&]dl=\d/, '').replace(/[?&]raw=\d/, '');
+        return base + (base.includes('?') ? '&raw=1' : '?raw=1');
+    }
+    // Google Drive
+    m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (m) return 'https://drive.google.com/uc?export=download&id=' + m[1];
+    return url;
+}
+
+function testOverlayPreview() {
+    const rawUrl = document.getElementById('videoUrl').value.trim();
+    if (!rawUrl) { toast('⚠️ Введіть URL медіа', 'error'); return; }
+
+    const url  = resolveMediaUrl(rawUrl);
+    const type = getMediaType(rawUrl);
+    const ph   = document.getElementById('previewPlaceholder');
+    const vid  = document.getElementById('previewVideo');
+    const aud  = document.getElementById('previewAudio');
+
+    if (ph)  ph.style.display  = 'none';
+    if (vid) { vid.style.display = 'none'; vid.pause(); vid.src = ''; }
+    if (aud) { aud.style.display = 'none'; aud.pause(); aud.src = ''; }
+
+    if (type === 'audio') {
+        if (aud) {
+            aud.onerror   = null;
+            aud.oncanplay = null;
+            let _done = false;
+            const onOk  = () => { if (_done) return; _done = true; aud.oncanplay = null; aud.onerror = null; toast('✅ Аудіо завантажено успішно', 'success'); };
+            const onErr = () => { if (_done) return; _done = true; aud.oncanplay = null; aud.onerror = null; toast('❌ Не вдалось завантажити аудіо. Перевірте URL.', 'error'); };
+            aud.oncanplay = onOk;
+            aud.onerror   = onErr;
+            aud.src = url;
+            aud.style.display = 'block';
+            aud.load();
+            aud.play().catch(() => {});
+        }
+    } else {
+        if (vid) {
+            vid.onerror   = null;
+            vid.oncanplay = null;
+            let _done = false;
+            const onOk  = () => { if (_done) return; _done = true; vid.oncanplay = null; vid.onerror = null; toast('✅ Відео завантажено успішно', 'success'); };
+            const onErr = () => { if (_done) return; _done = true; vid.oncanplay = null; vid.onerror = null; toast('❌ Не вдалось завантажити відео. Перевірте URL.', 'error'); };
+            vid.oncanplay = onOk;
+            vid.onerror   = onErr;
+            vid.src = url;
+            vid.style.display = 'block';
+            vid.load();
+            vid.play().catch(() => {});
+        }
+    }
+}
+
+// =====================================================================
+// РЕНДЕР АЛЕРТІВ
+// =====================================================================
+function getFilteredAlerts() {
+    const q = (searchQuery || '').toLowerCase().trim();
+    if (!q) return alerts;
+    return alerts.filter(a =>
+        (a.name || '').toLowerCase().includes(q) ||
+        (a.rewardId || '').toLowerCase().includes(q)
+    );
+}
+
+function renderAlerts() {
+    const container = document.getElementById('alertsList');
+    if (!container) return;
+
+    const filtered = getFilteredAlerts();
+
+    const clearBtn = document.getElementById('searchClear');
+    if (clearBtn) clearBtn.className = 'search-clear' + (searchQuery ? ' visible' : '');
+
+    if (alerts.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <p>Алерти ще не додані.<br>Додайте перший алерт зліва.</p>
+            </div>`;
+        return;
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🔍</div>
+                <p>Нічого не знайдено за<br><strong style="color:#eee">"${escHtml(searchQuery)}"</strong></p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map((a, idx) => {
+        const globalIdx = alerts.findIndex(al => al.id === a.id);
+        return `
+        <div class="alert-item" draggable="true"
+             ondragstart="onDragStart(event,${idx})"
+             ondragover="onDragOver(event,${idx})"
+             ondragleave="onDragLeave(event)"
+             ondrop="onDrop(event,${idx})"
+             ondragend="onDragEnd(event)">
+            <div class="drag-handle" title="Перетягни щоб змінити порядок">⠿</div>
+            <div style="flex:1;min-width:0;overflow:hidden">
+                <div class="alert-name">
+                    <span class="alert-order">#${globalIdx + 1}</span>${escHtml(a.name)}
+                    ${a.chromakey ? '<span class="chromakey-badge">🟩 хромакей</span>' : ''}
+                    ${a.showTimer === false ? '<span style="font-size:0.72em;color:#666;margin-left:4px">⏱️ прихований</span>' : ''}
+                </div>
+                <div class="alert-meta">
+                    <span>🎁 ${escHtml(a.rewardId || '—')}</span>
+                    <span>⏱️ ${a.duration}с</span>
+                    <span title="${escHtml(a.url)}">${getMediaType(a.url) === 'audio' ? '🎵' : '🎬'} ${escHtml(a.url)}</span>
+                </div>
+            </div>
+            <div class="alert-actions">
+                <button class="btn-test" onclick="quickTest(${a.id})" title="Тест в overlay">▶</button>
+                <button class="btn-edit" onclick="editAlert(${a.id})">✏️</button>
+                <button class="btn-danger" onclick="deleteAlert(${a.id})">🗑</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// =====================================================================
+// РЕДАГУВАННЯ / ВИДАЛЕННЯ
+// =====================================================================
+function editAlert(id) {
+    const a = alerts.find(x => x.id === id);
+    if (!a) return;
+
+    editingId = id;
+
+    const setIfExists = (id, prop, value) => {
+        const el = document.getElementById(id);
+        if (el) el[prop] = value;
+    };
+
+    setIfExists('alertName',    'value',       a.name);
+    setIfExists('videoUrl',     'value',       a.url);
+    onMediaUrlChange(a.url);
+    setIfExists('duration',     'value',       a.duration);
+    setIfExists('formTitle',    'textContent', 'Редагувати алерт');
+    setIfExists('editingBadge', 'innerHTML',   '<span class="editing-badge">редагування</span>');
+    setIfExists('manualRewardId','value',      a.rewardId);
+    setIfExists('obsScene',     'value',       a.obsScene  || '');
+    setIfExists('obsSource',    'value',       a.obsSource || '');
+    setIfExists('obsFilter',    'value',       a.obsFilter || 'Chroma Key');
+
+    const ckEl = document.getElementById('chromakey');
+    if (ckEl) { ckEl.checked = !!a.chromakey; updateChromakeyToggle(ckEl.checked); }
+
+    const stEl = document.getElementById('showTimer');
+    if (stEl) { stEl.checked = a.showTimer !== false; updateShowTimerToggle(stEl.checked); }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteAlert(id) {
+    if (!confirm('Видалити цей алерт?')) return;
+    alerts = alerts.filter(a => a.id !== id);
+    saveAlerts();
+    renderAlerts();
+    syncConfigToSB({ silent: false });
+    toast('🗑 Алерт видалено', 'info');
+}
+
+// =====================================================================
+// ОЧИЩЕННЯ ВСЬОГО СПИСКУ НАГОРОД
+// =====================================================================
+function clearAllAlerts() {
+    if (alerts.length === 0) {
+        toast('⚠️ Список нагород вже порожній', 'error');
+        return;
+    }
+    const countEl = document.getElementById('modalCount');
+    if (countEl) countEl.textContent = alerts.length;
+    const modal = document.getElementById('confirmModal');
+    if (modal) modal.classList.add('visible');
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    if (modal) modal.classList.remove('visible');
+}
+
+function onModalOverlayClick(e) {
+    if (e.target === document.getElementById('confirmModal')) closeConfirmModal();
+}
+
+async function confirmClearAlerts() {
+    closeConfirmModal();
+    alerts = [];
+    saveAlerts();
+    renderAlerts();
+
+    // Синхронізуємо порожній конфіг в SB + викликаємо ClearAlerts action
+    try {
+        await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: { name: 'ClearAlerts', group: '' },
+                args: {}
+            }),
+            signal: AbortSignal.timeout(3000)
+        });
+    } catch(_) {}
+
+    await syncConfigToSB({ silent: true });
+    toast('🧹 Список нагород очищено', 'success');
+    wlog('config', '🧹 Список нагород очищено вручну');
+}
+
+function cancelEdit() {
+    clearForm();
+    toast('✖ Скасовано', 'info');
+}
+
+function clearForm() {
+    editingId = null;
+
+    const setIfExists = (id, prop, value) => {
+        const el = document.getElementById(id);
+        if (el) el[prop] = value;
+    };
+
+    setIfExists('alertName',     'value',       '');
+    setIfExists('videoUrl',      'value',       '');
+    setIfExists('duration',      'value',       '10');
+    setIfExists('manualRewardId','value',       '');
+    setIfExists('formTitle',     'textContent', 'Додати алерт');
+    setIfExists('editingBadge',  'innerHTML',   '');
+
+    const ckEl = document.getElementById('chromakey');
+    if (ckEl) { ckEl.checked = false; updateChromakeyToggle(false); }
+
+    const stEl = document.getElementById('showTimer');
+    if (stEl) { stEl.checked = true; updateShowTimerToggle(true); }
+
+    setIfExists('obsScene',  'value', '');
+    setIfExists('obsSource', 'value', '');
+    setIfExists('obsFilter', 'value', 'Chroma Key');
+
+    const ph  = document.getElementById('previewPlaceholder');
+    const vid = document.getElementById('previewVideo');
+    const aud = document.getElementById('previewAudio');
+    const hint = document.getElementById('mediaTypeHint');
+    if (ph)   ph.style.display   = 'inline';
+    if (hint) hint.style.display = 'none';
+    if (vid)  { vid.style.display = 'none'; vid.pause(); vid.src = ''; }
+    if (aud)  { aud.style.display = 'none'; aud.pause(); aud.src = ''; }
+}
+
+// =====================================================================
+// CHAT MESSAGE TOGGLE
+// =====================================================================
+function onChatMsgToggle(checked) {
+    sendChatMsg = checked;
+    localStorage.setItem('sendChatMsg', checked ? 'true' : 'false');
+    applyChatMsgToggleUI(checked);
+    syncChatMsgSetting(checked);
+    toast(checked ? '💬 Повідомлення в чат увімкнено' : '🔇 Повідомлення в чат вимкнено',
+          checked ? 'success' : 'info');
+}
+
+function applyChatMsgToggleUI(on) {
+    const track = document.getElementById('chatMsgTrack');
+    const thumb = document.getElementById('chatMsgThumb');
+    const badge = document.getElementById('chatMsgBadge');
+    if (track) {
+        track.style.background  = on ? 'rgba(40,167,69,0.5)'  : 'rgba(255,255,255,0.12)';
+        track.style.borderColor = on ? 'rgba(40,167,69,0.8)'  : 'rgba(255,255,255,0.2)';
+    }
+    if (thumb) thumb.style.transform = on ? 'translateX(20px)' : 'translateX(0px)';
+    if (badge) {
+        badge.textContent = on ? '✅ Увімкнено' : '🔇 Вимкнено';
+        badge.className   = 'chat-status-badge ' + (on ? 'on' : 'off');
+    }
+}
+
+async function syncChatMsgSetting(enabled) {
+    // Записуємо через HTTP SetVideoAlertConfig action (вже існує в SB)
+    // або через DoAction SetGlobalVar якщо є
+    try {
+        await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: { name: 'SetChatMsgConfig', group: '' },
+                args: { enabled: enabled ? 'true' : 'false' }
+            }),
+            signal: AbortSignal.timeout(2000)
+        });
+    } catch(_) {}
+    // Також через WS якщо підключений (резервний шлях)
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+            ws.send(JSON.stringify({
+                request: 'DoAction',
+                id: 'chatmsg',
+                action: { name: 'SetChatMsgConfig', group: '' },
+                args: { enabled: enabled ? 'true' : 'false' }
+            }));
+        } catch(_) {}
+    }
+}
+
+// =====================================================================
+// NICKNAME TOGGLE
+// =====================================================================
+function onNickToggle(checked) {
+    showNickname = checked;
+    localStorage.setItem('showNickname', checked ? 'true' : 'false');
+    applyNickToggleUI(checked);
+    syncNicknameSetting(checked);
+    toast(checked ? '👤 Нікнейм на екрані увімкнено' : '👤 Нікнейм на екрані вимкнено',
+          checked ? 'success' : 'info');
+}
+
+function applyNickToggleUI(on) {
+    const track = document.getElementById('nickTrack');
+    const thumb = document.getElementById('nickThumb');
+    const badge = document.getElementById('nickBadge');
+    if (track) {
+        track.style.background  = on ? 'rgba(40,167,69,0.5)'  : 'rgba(255,255,255,0.12)';
+        track.style.borderColor = on ? 'rgba(40,167,69,0.8)'  : 'rgba(255,255,255,0.2)';
+    }
+    if (thumb) thumb.style.transform = on ? 'translateX(16px)' : 'translateX(0px)';
+    if (badge) {
+        badge.textContent = on ? '✅ Увімкнено' : '🔇 Вимкнено';
+        badge.className   = 'chat-status-badge ' + (on ? 'on' : 'off');
+    }
+}
+
+async function syncNicknameSetting(enabled) {
+    try {
+        await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: { name: 'SetNicknameConfig', group: '' },
+                args: { enabled: enabled ? 'true' : 'false' }
+            }),
+            signal: AbortSignal.timeout(2000)
+        });
+    } catch(_) {}
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+            ws.send(JSON.stringify({
+                request: 'DoAction',
+                id: 'nickcfg',
+                action: { name: 'SetNicknameConfig', group: '' },
+                args: { enabled: enabled ? 'true' : 'false' }
+            }));
+        } catch(_) {}
+    }
+}
+
+// =====================================================================
+// UI HELPERS
+// =====================================================================
+function setStatus(ok, text) {
+    const bar    = document.getElementById('statusBar');
+    const textEl = document.getElementById('statusText');
+    if (bar)    bar.className = 'status-bar' + (ok ? ' connected' : '');
+    if (textEl) textEl.textContent = text;
+}
+
+function setSyncBadge(state, text) {
+    const el = document.getElementById('syncBadge');
+    if (!el) return;
+    el.className = 'sync-badge' + (state ? ' ' + state : '');
+    el.textContent = text;
+}
+
+function toast(msg, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    container.appendChild(el);
+
+    const remove = () => {
+        el.classList.add('removing');
+        setTimeout(() => el.remove(), 260);
+    };
+    setTimeout(remove, 3500);
+
+    if (type === 'success') wlog('log', msg);
+    if (type === 'error')   wlog('error', `❌ ${msg}`);
+}
+
+function wlog(type, text) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    try {
+        ws.send(JSON.stringify({
+            request: 'DoAction',
+            id:      'wlog',
+            action:  { name: 'WriteLog', group: '' },
+            args:    { message: `INDEX|${type}|${text}` }
+        }));
+    } catch(_) {}
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+}
+
+// =====================================================================
+// ПОШУК
+// =====================================================================
+let searchQuery = '';
+
+function onSearchInput(val) {
+    searchQuery = val || '';
+    renderAlerts();
+}
+
+function clearSearch() {
+    const inp = document.getElementById('alertSearch');
+    if (inp) inp.value = '';
+    searchQuery = '';
+    renderAlerts();
+}
+
+// =====================================================================
+// ЧЕРГА (відстеження в адмін-панелі за подіями Channel Points)
+// =====================================================================
+const playbackQueue    = [];
+let   currentlyPlaying = null;
+let   progressInterval = null;
+let   playbackStart    = 0;
+let   playbackDur      = 0;
+
+function enqueuePlayback(alert) {
+    if (!currentlyPlaying) {
+        startPlaybackTracking(alert);
+    } else {
+        playbackQueue.push(alert);
+        renderQueueUI();
+    }
+}
+
+function startPlaybackTracking(alert) {
+    currentlyPlaying = alert;
+    playbackStart    = Date.now();
+    playbackDur      = ((alert.duration || 10) + 1.5) * 1000;
+    renderQueueUI();
+
+    if (progressInterval) clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+        const elapsed = Date.now() - playbackStart;
+        const pct = Math.max(0, 100 - (elapsed / playbackDur) * 100);
+        const bar = document.getElementById('qProgBar');
+        if (bar) bar.style.width = pct + '%';
+        if (elapsed >= playbackDur) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+            advanceQueue();
+        }
+    }, 300);
+}
+
+function advanceQueue() {
+    currentlyPlaying = playbackQueue.length ? playbackQueue.shift() : null;
+    if (currentlyPlaying) {
+        startPlaybackTracking(currentlyPlaying);
+    } else {
+        renderQueueUI();
+    }
+}
+
+function renderQueueUI() {
+    const panel     = document.getElementById('queuePanel');
+    const nowEl     = document.getElementById('qNow');
+    const listEl    = document.getElementById('qList');
+    const badgeEl   = document.getElementById('queueBadge');
+    const progWrap  = document.getElementById('qProgWrap');
+    if (!panel) return;
+
+    const total = (currentlyPlaying ? 1 : 0) + playbackQueue.length;
+    if (!total) { panel.classList.add('q-hidden'); return; }
+    panel.classList.remove('q-hidden');
+    if (badgeEl) badgeEl.textContent = total;
+
+    if (currentlyPlaying && nowEl) {
+        const mt = getMediaType(currentlyPlaying.url) === 'audio' ? '🎵' : '🎬';
+        nowEl.innerHTML = `
+            <div class="queue-now">
+                <div class="q-dot"></div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(currentlyPlaying.name)}</div>
+                    <div style="font-size:0.82em;opacity:0.65">${mt} · ${currentlyPlaying.duration}с</div>
+                </div>
+            </div>`;
+        if (progWrap) progWrap.style.display = 'block';
+    } else {
+        if (nowEl) nowEl.innerHTML = '';
+        if (progWrap) progWrap.style.display = 'none';
+    }
+
+    if (listEl) {
+        listEl.innerHTML = playbackQueue.map((a, i) => `
+            <div class="q-row">
+                <span class="q-pos">${i + 2}</span>
+                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(a.name)}</span>
+                <span style="color:#555;font-size:0.9em">${a.duration}с</span>
+            </div>`).join('');
+    }
+}
+
+// =====================================================================
+// DRAG & DROP
+// =====================================================================
+let dragSrcIdx = null;
+
+function onDragStart(e, idx) {
+    dragSrcIdx = idx;
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragOver(e, idx) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.alert-item').forEach(el => el.classList.remove('drag-over'));
+    if (idx !== dragSrcIdx) e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function onDrop(e, toIdx) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if (dragSrcIdx === null || dragSrcIdx === toIdx) { dragSrcIdx = null; return; }
+
+    const filtered = getFilteredAlerts();
+    const fromId   = filtered[dragSrcIdx]?.id;
+    const toId     = filtered[toIdx]?.id;
+    if (fromId == null || toId == null) { dragSrcIdx = null; return; }
+
+    const fromG = alerts.findIndex(a => a.id === fromId);
+    const toG   = alerts.findIndex(a => a.id === toId);
+    if (fromG === -1 || toG === -1) { dragSrcIdx = null; return; }
+
+    const [moved] = alerts.splice(fromG, 1);
+    alerts.splice(toG, 0, moved);
+    dragSrcIdx = null;
+
+    saveAlerts();
+    renderAlerts();
+    syncConfigToSB({ silent: true });
+    toast('↕ Порядок збережено', 'info');
+}
+
+function onDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+    document.querySelectorAll('.alert-item').forEach(el => el.classList.remove('drag-over'));
+    dragSrcIdx = null;
+}
+
+</script>
+</body>
+</html>

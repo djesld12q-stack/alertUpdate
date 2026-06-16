@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Alert Overlay</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            background: transparent;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #alertVideo {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        #alertVideo.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        #alertVideo.fading {
+            opacity: 0;
+        }
+
+        #timer {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            font-size: 3em;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.55);
+            padding: 14px 24px;
+            border-radius: 12px;
+            min-width: 80px;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        #timer.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        #timer.fading {
+            opacity: 0;
+        }
+
+        #debug {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.75);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            max-width: 360px;
+            z-index: 9999;
+            max-height: 260px;
+            overflow-y: auto;
+            line-height: 1.5;
+            transition: opacity 1s ease;
+        }
+        #debug.hiding { opacity: 0; pointer-events: none; }
+        #debug.hidden { display: none; }
+
+        .debug-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #f00;
+            flex-shrink: 0;
+            animation: blink 1s infinite;
+        }
+
+        .dot.on {
+            background: #0f0;
+            animation: none;
+        }
+
+        .dot.synced {
+            background: #6af;
+            animation: none;
+        }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        #userName {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.72);
+            color: #fff;
+            font-size: 1.8em;
+            font-weight: 800;
+            padding: 10px 32px;
+            border-radius: 14px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            border: 2px solid rgba(255,255,255,0.15);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 20;
+        }
+        #userName.visible {
+            display: block;
+            opacity: 1;
+        }
+        #userName.fading {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <video id="alertVideo" playsinline></video>
+    <audio id="alertAudio" style="display:none"></audio>
+    <div id="timer">5</div>
+    <div id="userName"></div>
+</div>
+
+<div id="debug">
+    <div class="debug-status">
+        <div class="dot" id="dot"></div>
+        <span id="connText">Підключення...</span>
+    </div>
+    <div class="debug-status" style="margin-bottom:0">
+        <div class="dot synced" id="configDot" style="background:#555;animation:blink 1s infinite"></div>
+        <span id="configText">Конфіг: очікування...</span>
+    </div>
+    <div id="log"></div>
+    <div style="margin-top:6px;border-top:1px solid #333;padding-top:6px">
+        <button onclick="runLocalTest()" style="background:#1a3a1a;color:#5be58b;border:1px solid #2a5a2a;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:monospace">▶ Тест з кешу</button>
+        <button onclick="document.getElementById('debug').style.display='none'" style="background:#3a1a1a;color:#f55;border:1px solid #5a2a2a;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:monospace;margin-left:4px">✕ Сховати</button>
+    </div>
+</div>
+
+<script>
+// =====================================================================
+// CONFIG
+// =====================================================================
+const WS_URL       = 'ws://127.0.0.1:8080/';
+const HTTP_URL     = 'http://127.0.0.1:7474';
+const RECONNECT_MS = 4000;
+
+// =====================================================================
+// ВБУДОВАНИЙ КОНФІГ АЛЕРТІВ
+// Оновлюється динамічно через WS ConfigUpdate — файл не потрібно перезаписувати.
+// Слугує як початковий fallback при першому запуску.
+// =====================================================================
+const EMBEDDED_ALERTS = /*ALERTS_JSON*/[{"id":1781203498838,"name":"Jumpscare","url":"https://github.com/djesld12q-stack/VideoAlertReward/raw/refs/heads/main/32e99075-56a0-4c36-98d7-33391e861b13.mp4","duration":10,"rewardId":"01bda013-e209-492d-9ea2-4709cbbdc620","rewardName":"Custom: 01bda013-e209-492d-9ea2-4709cbbdc620","createdAt":"2026-06-11T18:44:58.838Z","chromakey":true,"obsScene":"ВІДЖЕТИ","obsSource":"AlertReward","obsFilter":"Хромакей","showTimer":false},{"id":1781206577231,"name":"ха","url":"https://github.com/djesld12q-stack/VideoAlertReward/raw/refs/heads/main/ff193c45-5907-4a97-a0e1-908ed8f2b2a6.mp4","duration":6,"rewardId":"2f096335-b2ee-455c-a691-93673bc276b8","rewardName":"Custom: 2f096335-b2ee-455c-a691-93673bc276b8","createdAt":"2026-06-11T19:36:17.231Z","chromakey":false,"showTimer":false,"obsScene":"","obsSource":"","obsFilter":"Chroma Key"},{"id":1781292313880,"name":"Голодний кіт","url":"https://github.com/djesld12q-stack/VideoAlertReward/raw/refs/heads/main/fe8dc5f0-3917-49d3-a213-3c9c5872fc4d.mp4","duration":10,"rewardId":"34d0cbfa-a325-4ee3-89a1-14515d4e904a","rewardName":"Custom: 34d0cbfa-a325-4ee3-89a1-14515d4e904a","chromakey":false,"showTimer":false,"obsScene":"","obsSource":"","obsFilter":"Chroma Key","createdAt":"2026-06-12T19:25:13.880Z"}]/*END_ALERTS_JSON*/;
+
+// =====================================================================
+// STATE
+// =====================================================================
+let ws            = null;
+let timerInterval = null;
+let hideTimeout   = null;
+let isPlaying     = false;
+let isFading      = false;   // ← захист від подвійного fadeOut
+let configLoaded  = false;
+
+// Кеш алертів: EMBEDDED → перезаписується при ConfigUpdate або з SB globalVar
+let alertsCache = Array.isArray(EMBEDDED_ALERTS) && EMBEDDED_ALERTS.length > 0
+                  ? EMBEDDED_ALERTS
+                  : [];
+
+// Черга алертів
+const alertQueue = [];
+
+// =====================================================================
+// SB HTTP HELPER
+// =====================================================================
+async function sbAction(actionName, args = {}) {
+    try {
+        const res = await fetch(`${HTTP_URL}/DoAction`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ action: { name: actionName, group: '' }, args }),
+            signal:  AbortSignal.timeout(3000)
+        });
+        if (!res.ok) dlog(`⚠️ sbAction "${actionName}" HTTP ${res.status}`);
+        return res.ok;
+    } catch(e) {
+        dlog(`⚠️ sbAction "${actionName}": ${e.message}`);
+        return false;
+    }
+}
+
+// =====================================================================
+// AUTOPLAY UNLOCK — розблокування аудіо при першій взаємодії
+// Браузери блокують аудіо до першого кліку/натискання клавіші.
+// Ми "прогріваємо" AudioContext при першій взаємодії, щоб MP3/WAV грали.
+// =====================================================================
+let _audioUnlocked = false;
+function unlockAudio() {
+    if (_audioUnlocked) return;
+    _audioUnlocked = true;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        ctx.resume().then(() => {
+            dlog('🔊 Аудіо розблоковано');
+        }).catch(() => {});
+    } catch(_) {}
+
+    // Також "торкаємось" audio елементу
+    const audio = document.getElementById('alertAudio');
+    if (audio) {
+        audio.muted = true;
+        audio.play().catch(() => {});
+        audio.pause();
+        audio.muted = false;
+        audio.src = '';
+    }
+}
+['click','keydown','touchstart','pointerdown'].forEach(ev =>
+    document.addEventListener(ev, unlockAudio, { once: false, capture: true })
+);
+
+// =====================================================================
+// INIT
+// =====================================================================
+window.addEventListener('load', () => {
+    dlog('Overlay ready');
+    connectWS();
+});
+
+// =====================================================================
+// WEBSOCKET
+// =====================================================================
+function connectWS() {
+    try {
+        ws = new WebSocket(WS_URL);
+
+        ws.onopen = () => {
+            setConn(true, 'Підключено до Streamer.bot');
+            dlog('✓ Connected');
+
+            ws.send(JSON.stringify({
+                request: 'Subscribe',
+                id: 'overlay-sub',
+                events: {
+                    Twitch:  ['ChannelPointsRewardRedemption'],
+                    General: ['Custom']
+                }
+            }));
+
+            // Завантажуємо конфіг з SB globalVar при підключенні
+            loadConfigFromSB();
+        };
+
+        ws.onmessage = (e) => {
+            try { handleMsg(JSON.parse(e.data)); } catch(_) {}
+        };
+
+        ws.onerror   = () => setConn(false, 'WS помилка');
+        ws.onclose   = () => {
+            setConn(false, 'Відключено');
+            dlog(`Reconnect in ${RECONNECT_MS/1000}s...`);
+            setTimeout(connectWS, RECONNECT_MS);
+        };
+
+    } catch(_) {
+        setConn(false, 'Не вдалося підключитись');
+        setTimeout(connectWS, RECONNECT_MS);
+    }
+}
+
+// =====================================================================
+// ОБРОБКА ПОВІДОМЛЕНЬ
+// =====================================================================
+function parseBool(val, defaultVal = false) {
+    if (val === undefined || val === null) return defaultVal;
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') return val.toLowerCase() !== 'false' && val !== '0' && val !== '';
+    return !!val;
+}
+
+// Визначення типу медіа за розширенням (як у index.html getMediaType)
+// Використовується як fallback, якщо mediaType не прийшов разом з алертом.
+function detectMediaType(url) {
+    if (!url) return 'video';
+    const clean = String(url).split('?')[0].split('#')[0];
+    const ext   = clean.split('.').pop().toLowerCase();
+    if (['mp3','wav','ogg','oga','flac','aac','m4a','opus','weba'].includes(ext)) return 'audio';
+    return 'video';
+}
+
+// =====================================================================
+// RESOLVE MEDIA URL
+// GitHub /raw/ посилання роблять HTTP 302 редирект на raw.githubusercontent.com.
+// Браузер у OBS/CEF інколи не слідує редиректу для <audio> — конвертуємо одразу.
+// =====================================================================
+function resolveMediaUrl(url) {
+    if (!url) return url;
+
+    // GitHub: https://github.com/{user}/{repo}/raw/refs/heads/{branch}/{file}
+    //      -> https://raw.githubusercontent.com/{user}/{repo}/refs/heads/{branch}/{file}
+    let m = url.match(/^https?:\/\/github\.com\/([^/]+\/[^/]+)\/raw\/(.+)$/);
+    if (m) {
+        // Нормалізуємо path: кодуємо символи що OBS CEF не любить (, ; ?)
+        const path = m[2].replace(/,/g, '%2C').replace(/;/g, '%3B');
+        const resolved = 'https://raw.githubusercontent.com/' + m[1] + '/' + path;
+        dlog('URL rewrite: github/raw -> raw.githubusercontent: ' + resolved.slice(0, 80));
+        return resolved;
+    }
+
+    // raw.githubusercontent.com — теж нормалізуємо кому
+    if (/raw\.githubusercontent\.com/.test(url)) {
+        const parts = url.split('/');
+        // Кодуємо тільки path частину (після першого /)
+        const origin = parts.slice(0, 3).join('/');
+        const path   = parts.slice(3).map(p => p.replace(/,/g, '%2C').replace(/;/g, '%3B')).join('/');
+        return origin + '/' + path;
+    }
+
+    // Dropbox: dl=0/dl=1 -> raw=1
+    if (/dropbox\.com/.test(url)) {
+        const base = url.replace(/[?&]dl=\d/, '').replace(/[?&]raw=\d/, '');
+        return base + (base.includes('?') ? '&raw=1' : '?raw=1');
+    }
+
+    // Google Drive: /file/d/{id}/view -> /uc?export=download&id={id}
+    m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (m) {
+        return 'https://drive.google.com/uc?export=download&id=' + m[1];
+    }
+
+    return url;
+}
+
+function makeAlertArgs(d) {
+    const videoUrl = d.videoUrl || d.url || '';
+    return {
+        videoUrl,
+        mediaType: d.mediaType || detectMediaType(videoUrl),
+        duration:  d.duration  || 10,
+        name:      d.name      || 'Alert',
+        userName:     d.userName     || '',
+        showNickname: d.showNickname !== undefined ? parseBool(d.showNickname, false) : false,
+        chromakey: parseBool(d.chromakey, false),
+        showTimer: parseBool(d.showTimer, true),
+        obsScene:  d.obsScene  || '',
+        obsSource: d.obsSource || '',
+        obsFilter: d.obsFilter || 'Chroma Key'
+    };
+}
+
+function handleMsg(data) {
+    dlog('MSG: ' + JSON.stringify(data).slice(0, 120));
+
+    // ── Живе оновлення конфігу від адмін-панелі (SetVideoAlertConfig → broadcast) ──
+    if (data.action === 'ConfigUpdate') {
+        const newAlerts = data.data?.alerts;
+        if (Array.isArray(newAlerts)) {
+            // Скасовуємо retry — конфіг вже прийшов через WS
+            if (_configRetryTimer) { clearTimeout(_configRetryTimer); _configRetryTimer = null; }
+            alertsCache  = newAlerts;
+            configLoaded = true;
+            setConfigStatus(true, `✓ Конфіг live: ${alertsCache.length} алертів`);
+            dlog(`✓ ConfigUpdate: ${alertsCache.length} алертів`);
+        }
+        return;
+    }
+
+    // ── Пряме повідомлення action="VideoAlert" (від WebsocketBroadcastJson) ──
+    if (data.action === 'VideoAlert') {
+        const d = data.data || {};
+        if (d.videoUrl) {
+            dlog(`▶ Direct VideoAlert: ${d.name || 'Alert'}`);
+            playAlert(makeAlertArgs(d));
+        }
+        return;
+    }
+
+    // ── Broadcast від Streamer.bot (WebsocketBroadcastJson → General/Custom) ──
+    if (data.event?.source === 'General' && data.event?.type === 'Custom') {
+        let inner = data.data;
+        if (typeof inner === 'string') { try { inner = JSON.parse(inner); } catch(_) {} }
+
+        // ConfigUpdate всередині General/Custom
+        if (inner?.action === 'ConfigUpdate') {
+            const newAlerts = inner.data?.alerts;
+            if (Array.isArray(newAlerts)) {
+                if (_configRetryTimer) { clearTimeout(_configRetryTimer); _configRetryTimer = null; }
+                alertsCache  = newAlerts;
+                configLoaded = true;
+                setConfigStatus(true, `✓ Конфіг live: ${alertsCache.length} алертів`);
+                dlog(`✓ ConfigUpdate (General): ${alertsCache.length} алертів`);
+            }
+            return;
+        }
+
+        if (inner?.action === 'VideoAlert' && inner?.data?.videoUrl) {
+            dlog(`▶ General/Custom VideoAlert: ${inner.data.name || 'Alert'}`);
+            playAlert(makeAlertArgs(inner.data));
+            return;
+        }
+
+        const raw = inner?.broadcast || inner?.message || inner?.payload;
+        if (raw) {
+            let parsed = raw;
+            if (typeof raw === 'string') { try { parsed = JSON.parse(raw); } catch(_) {} }
+            if (parsed?.action === 'VideoAlert' && parsed?.data?.videoUrl) {
+                dlog(`▶ General/Custom/raw: ${parsed.data.name || 'Alert'}`);
+                playAlert(makeAlertArgs(parsed.data));
+                return;
+            }
+        }
+    }
+
+    // ── WebsocketClient Broadcast ──
+    if (data.event?.type === 'Broadcast' || data.event?.source === 'WebsocketClient') {
+        let inner = data.data;
+        if (typeof inner === 'string') { try { inner = JSON.parse(inner); } catch(_) {} }
+        if (inner?.action === 'VideoAlert' && inner?.data?.videoUrl) {
+            dlog(`▶ WsClient Broadcast: ${inner.data.name || 'Alert'}`);
+            playAlert(makeAlertArgs(inner.data));
+            return;
+        }
+    }
+
+    // ── Channel Point Redemption ──
+    if (data.event?.type === 'ChannelPointsRewardRedemption' ||
+        (data.event?.source === 'Twitch' && data.event?.type === 'ChannelPoints.Redeemed')) {
+        const rd = data.data || {};
+        dlog('🎁 RAW: ' + JSON.stringify(rd).slice(0, 200));
+
+        const rewardId =
+            rd?.reward?.id         ||
+            rd?.rewardId           ||
+            rd?.id                 ||
+            data?.data?.reward?.id ||
+            data?.rewardId         || '';
+
+        const user = rd?.user?.displayName || rd?.userName || rd?.userLogin || '?';
+        dlog(`🎁 rewardId="${rewardId}" user="${user}"`);
+
+        if (rewardId) tryLocalFallback(rewardId);
+        else dlog('⚠️ rewardId НЕ знайдено! Перевір RAW вище.');
+        return;
+    }
+}
+
+// =====================================================================
+// ЗАВАНТАЖЕННЯ КОНФІГУ
+// Пріоритет: 1) SB globalVar (HTTP)  2) EMBEDDED  3) localStorage
+// Якщо globalVar ще не готовий — retry кожні 2с до 30с, потім fallback.
+// =====================================================================
+let _configRetryTimer = null;
+let _configRetryCount = 0;
+const CONFIG_RETRY_INTERVAL = 2000;  // ms між спробами
+const CONFIG_RETRY_MAX      = 15;    // 15 × 2с = 30с максимум
+
+async function loadConfigFromSB() {
+    setConfigStatus(false, '⏳ Завантаження конфігу...');
+    _configRetryCount = 0;
+    if (_configRetryTimer) { clearTimeout(_configRetryTimer); _configRetryTimer = null; }
+    await _tryLoadConfig();
+}
+
+async function _tryLoadConfig() {
+    // 1) SB HTTP globalVar
+    try {
+        const res = await fetch(`${HTTP_URL}/GetGlobalVar?varName=videoAlertConfig&persisted=true`,
+            { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        let raw = json?.value || json?.Value || json?.data?.value || json?.data?.Value || '';
+        if (!raw && typeof json === 'string') raw = json;
+        if (raw) {
+            let parsed;
+            try { parsed = JSON.parse(raw); } catch(_) { parsed = null; }
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                alertsCache  = parsed;
+                configLoaded = true;
+                setConfigStatus(true, `✓ Конфіг з SB: ${alertsCache.length} алертів`);
+                dlog(`✓ Конфіг з SB globalVar: ${alertsCache.length} алертів`);
+                return; // ← успіх, зупиняємо retry
+            }
+        }
+        // globalVar порожній — SB ще не записав конфіг
+        dlog(`⏳ SB globalVar порожній (спроба ${_configRetryCount + 1}/${CONFIG_RETRY_MAX})`);
+    } catch(e) {
+        dlog(`⚠️ SB globalVar HTTP помилка: ${e.message} (спроба ${_configRetryCount + 1}/${CONFIG_RETRY_MAX})`);
+    }
+
+    // Ще є спроби — чекаємо і повторюємо
+    _configRetryCount++;
+    if (_configRetryCount < CONFIG_RETRY_MAX) {
+        const secsLeft = Math.round(((CONFIG_RETRY_MAX - _configRetryCount) * CONFIG_RETRY_INTERVAL) / 1000);
+        setConfigStatus(false, `⏳ Чекаємо SB... (ще ~${secsLeft}с)`);
+        _configRetryTimer = setTimeout(_tryLoadConfig, CONFIG_RETRY_INTERVAL);
+        return;
+    }
+
+    // Вичерпали спроби — fallback
+    dlog('⚠️ SB globalVar не відповів за 30с — використовуємо fallback');
+
+    // 2) Вбудований конфіг
+    if (Array.isArray(EMBEDDED_ALERTS) && EMBEDDED_ALERTS.length > 0) {
+        alertsCache  = EMBEDDED_ALERTS;
+        configLoaded = true;
+        setConfigStatus(true, `✓ Конфіг вбудований: ${alertsCache.length} алертів`);
+        dlog(`✓ Конфіг вбудований (fallback): ${alertsCache.length} алертів`);
+        return;
+    }
+
+    // 3) localStorage (якщо overlay і адмін в одному браузері)
+    try {
+        const parsed = JSON.parse(localStorage.getItem('videoAlerts') || '[]');
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            alertsCache  = parsed;
+            configLoaded = true;
+            setConfigStatus(true, `✓ Конфіг localStorage: ${alertsCache.length} алертів`);
+            dlog(`✓ Конфіг localStorage (fallback): ${alertsCache.length} алертів`);
+            return;
+        }
+    } catch(_) {}
+
+    setConfigStatus(false, '⚠️ Конфіг не знайдено!');
+    dlog('⚠️ Конфіг порожній — збережи алерт в адмін-панелі');
+}
+
+function tryLocalFallback(rewardId) {
+    if (alertsCache.length === 0) {
+        dlog('⚠️ Конфіг порожній');
+        return;
+    }
+
+    dlog(`Пошук "${rewardId}" серед: ${alertsCache.map(a => '"' + a.rewardId + '"').join(', ')}`);
+    const found = alertsCache.find(a => String(a.rewardId).trim() === String(rewardId).trim());
+
+    if (found) {
+        dlog(`✓ Match! Граємо: ${found.name}`);
+        playAlert(makeAlertArgs({ ...found, videoUrl: found.url }));
+    } else {
+        dlog(`✗ Немає збігу для "${rewardId}"`);
+        dlog('→ Перевір rewardId в адмін-панелі і натисни "Синхронізувати"');
+    }
+}
+
+// =====================================================================
+// ПРОГРАТИ ВІДЕО — з чергою
+// =====================================================================
+function playAlert({ videoUrl, mediaType, duration = 10, name = 'Alert', userName = '', showNickname = false, chromakey = false, showTimer = true, obsScene = '', obsSource = '', obsFilter = 'Chroma Key' }) {
+    if (!mediaType) mediaType = detectMediaType(videoUrl);
+    if (isPlaying) {
+        alertQueue.push({ videoUrl, mediaType, duration, name, userName, showNickname, chromakey, showTimer, obsScene, obsSource, obsFilter });
+        dlog(`⏳ В черзі [${alertQueue.length}]: ${name}`);
+        return;
+    }
+    _startPlayback({ videoUrl, mediaType, duration, name, userName, showNickname, chromakey, showTimer, obsScene, obsSource, obsFilter });
+}
+
+function _startPlayback({ videoUrl, mediaType, duration = 10, name = 'Alert', userName = '', showNickname = false, chromakey = false, showTimer = true, obsScene = '', obsSource = '', obsFilter = 'Chroma Key' }) {
+    if (typeof showTimer === 'string') showTimer = showTimer.toLowerCase() !== 'false';
+    if (typeof chromakey === 'string') chromakey = chromakey.toLowerCase() === 'true';
+    if (!mediaType) mediaType = detectMediaType(videoUrl);
+
+    const video   = document.getElementById('alertVideo');
+    const audio   = document.getElementById('alertAudio');
+    const timerEl = document.getElementById('timer');
+
+    const isAudio = mediaType === 'audio';
+    const media   = isAudio ? audio : video;
+    const other   = isAudio ? video : audio;
+
+    isPlaying = true;
+
+    dlog(`▶ Playing: ${name} (${duration}s) [${mediaType}]${chromakey ? ' [🟩хромакей]' : ''}${!showTimer ? ' [таймер off]' : ''}`);
+    // Детальний лог в файл
+    wlogAlert({ name, videoUrl, duration, chromakey, showTimer, obsScene, obsSource, obsFilter });
+
+    // Прибираємо хендлери з обох елементів і повністю зупиняємо той, що зараз не потрібен
+    video.oncanplay = null; video.onended = null; video.onerror = null;
+    audio.oncanplay = null; audio.onended = null; audio.onerror = null;
+    other.pause();
+    other.src = '';
+
+    video.classList.remove('fading', 'visible');
+    timerEl.classList.remove('fading', 'visible');
+
+    media.src    = resolveMediaUrl(videoUrl);
+    media.volume = 1;
+    media.muted  = false;
+
+    let timerStarted = false;
+
+    media.oncanplay = () => {
+        if (timerStarted) return;
+        timerStarted = true;
+        media.oncanplay = null;
+
+        const startPlayback = () => {
+            if (!isAudio) video.classList.add('visible');
+            if (showTimer) timerEl.classList.add('visible');
+            // Показуємо ім'я користувача тільки для відео і якщо дозволено
+            if (!isAudio && userName && showNickname) {
+                const unEl = document.getElementById('userName');
+                unEl.textContent = '👤 ' + userName;
+                unEl.style.display = 'block';
+                void unEl.offsetWidth;
+                unEl.classList.add('visible');
+            }
+
+            const tryPlay = () => {
+                media.play().then(() => {
+                    // Якщо аудіо/відео вмикалось muted для розблокування — відновлюємо гучність
+                    if (media.muted) {
+                        media.muted = false;
+                        media.volume = 1;
+                    }
+                }).catch(err => {
+                    dlog(`⚠️ Play помилка: ${err.name}`);
+                    if (isAudio) {
+                        // Для аудіо: НЕ muted — просто логуємо і завершуємо
+                        dlog('✗ Аудіо заблоковано браузером (потрібна взаємодія)');
+                        wlog({ type: 'error', name: 'audio_blocked', message: 'audio_blocked: ' + name });
+                        _finish({ name, chromakey, obsScene, obsSource, obsFilter, mediaType });
+                    } else {
+                        // Для відео: спробуємо muted як фолбек
+                        media.muted = true;
+                        media.play().catch(() => {
+                            dlog('✗ Play заблоковано навіть muted');
+                            _finish({ name, chromakey, obsScene, obsSource, obsFilter, mediaType });
+                        });
+                    }
+                });
+            };
+            tryPlay();
+
+            let t = duration;
+            updateTimer(t);
+
+            timerInterval = setInterval(() => {
+                t--;
+                updateTimer(t);
+                if (t <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    fadeOut({ name, chromakey, obsScene, obsSource, obsFilter, mediaType });
+                }
+            }, 1000);
+
+            hideTimeout = setTimeout(() => fadeOut({ name, chromakey, obsScene, obsSource, obsFilter, mediaType }), (duration + 2) * 1000);
+        };
+
+        if (chromakey && obsSource) {
+            // Спочатку вмикаємо хромакей, чекаємо поки OBS застосує фільтр (~600мс), потім показуємо відео
+            dlog(`🟩 ChromaKey SHOW → SB: "${obsSource}" (чекаємо 600мс...)`);
+            sbAction('ChromaKeyControl', { action: 'show', obsScene, obsSource, obsFilter });
+            setTimeout(startPlayback, 600);
+        } else {
+            startPlayback();
+        }
+    };
+
+    media.onended = () => {
+        if (timerInterval) {
+            media.currentTime = 0;
+            media.play().catch(() => {});
+        } else {
+            fadeOut({ name, chromakey, obsScene, obsSource, obsFilter, mediaType });
+        }
+    };
+
+    media.onerror = () => {
+        const ME = media.error;
+        const codeMap = { 1:'ABORTED', 2:'NETWORK', 3:'DECODE', 4:'SRC_NOT_SUPPORTED' };
+        const errCode = ME ? (codeMap[ME.code] || ('code=' + ME.code)) : 'unknown';
+        const errMsg  = ME?.message || '';
+
+        media.oncanplay = null;
+        media.onended   = null;
+        media.onerror   = null;
+        media.src = '';
+        media.load();
+
+        dlog('ERR ' + errCode + (errMsg ? ': ' + errMsg : '') + ' [' + mediaType + '] ' + name);
+        dlog('URL: ' + videoUrl.slice(0, 100));
+        wlog({ type: 'error', name: errCode + ' [' + mediaType + '] ' + name, message: errCode + ' [' + mediaType + '] ' + videoUrl.slice(0, 120) });
+        _finish({ name, chromakey, obsScene, obsSource, obsFilter, mediaType });
+    };
+
+    media.load();
+}
+
+function fadeOut({ name = '', chromakey = false, obsScene = '', obsSource = '', obsFilter = '', mediaType = 'video' } = {}) {
+    // Подвійний захист: якщо вже програємось fadeOut або нічого не грає — виходимо
+    if (!isPlaying || isFading) return;
+    isFading = true;
+
+    const video = document.getElementById('alertVideo');
+    const audio = document.getElementById('alertAudio');
+    const timer = document.getElementById('timer');
+    const media = mediaType === 'audio' ? audio : video;
+
+    // КРИТИЧНО: знімаємо обробники ОДРАЗУ, до setTimeout —
+    // інакше onended може спрацювати під час 450ms fade і викликати fadeOut вдруге
+    media.oncanplay = null;
+    media.onended   = null;
+    media.onerror   = null;
+
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    if (hideTimeout)   { clearTimeout(hideTimeout);    hideTimeout   = null; }
+
+    if (mediaType !== 'audio') video.classList.add('fading');
+    timer.classList.add('fading');
+    const unElFade = document.getElementById('userName');
+    unElFade.classList.add('fading');
+
+    setTimeout(() => {
+        if (mediaType !== 'audio') video.classList.remove('visible', 'fading');
+        timer.classList.remove('visible', 'fading');
+        const unElHide = document.getElementById('userName');
+        unElHide.classList.remove('visible', 'fading');
+        unElHide.style.display = 'none';
+        unElHide.textContent = '';
+        media.pause();
+        media.src = '';
+        dlog('✓ Hidden');
+        _finish({ name, chromakey, obsScene, obsSource, obsFilter });
+    }, 450);
+}
+
+function _finish({ name = '', chromakey = false, obsScene = '', obsSource = '', obsFilter = '' } = {}) {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    if (hideTimeout)   { clearTimeout(hideTimeout);    hideTimeout   = null; }
+    isPlaying = false;
+    isFading  = false;   // ← скидаємо прапор, щоб наступний алерт міг нормально завершитись
+
+    wlogEnd(name);
+
+    if (chromakey && obsSource) {
+        // +1с затримка після таймера, щоб хромакей вимикався пізніше за відео
+        dlog(`🟩 ChromaKey HIDE → SB: "${obsSource}" (через 1с...)`);
+        setTimeout(() => {
+            dlog(`🟩 ChromaKey HIDE → SB: "${obsSource}" ✓`);
+            sbAction('ChromaKeyControl', { action: 'hide', obsScene, obsSource, obsFilter });
+        }, 1000);
+    }
+
+    if (alertQueue.length > 0) {
+        const next = alertQueue.shift();
+        dlog(`▶ Черга: ${next.name} (ще: ${alertQueue.length})`);
+        _startPlayback(next);
+    } else {
+        dlog('✓ Черга порожня');
+    }
+}
+
+function stopCurrent() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    if (hideTimeout)   { clearTimeout(hideTimeout);    hideTimeout   = null; }
+
+    const video = document.getElementById('alertVideo');
+    const audio = document.getElementById('alertAudio');
+    const timer = document.getElementById('timer');
+
+    [video, audio].forEach(m => {
+        m.oncanplay = null;
+        m.onended   = null;
+        m.onerror   = null;
+        m.pause();
+        m.src = '';
+    });
+
+    video.classList.remove('visible', 'fading');
+    timer.classList.remove('visible', 'fading');
+    const unElStop = document.getElementById('userName');
+    if (unElStop) { unElStop.classList.remove('visible','fading'); unElStop.style.display='none'; unElStop.textContent=''; }
+    isPlaying = false;
+    isFading  = false;
+
+    if (alertQueue.length > 0) {
+        dlog(`⛔ Черга очищена (${alertQueue.length} скасовано)`);
+        alertQueue.length = 0;
+    }
+}
+
+function updateTimer(s) {
+    document.getElementById('timer').textContent = Math.max(0, s);
+}
+
+// =====================================================================
+// DEBUG
+// =====================================================================
+function dlog(msg) {
+    const log  = document.getElementById('log');
+    const time = new Date().toLocaleTimeString('uk', { hour12: false });
+    const d    = document.createElement('div');
+    d.textContent = `[${time}] ${msg}`;
+    log.insertBefore(d, log.firstChild);
+    while (log.children.length > 18) log.removeChild(log.lastChild);
+    // файловий лог НЕ тут — тільки через wlogAlert/wlogEnd/wlogChromakey/wlogQueue
+}
+
+// Лог старту алерту з повними деталями
+function wlogAlert(alertData) {
+    wlog({
+        type:      'alert_start',
+        name:      alertData.name      || '',
+        rewardId:  alertData.rewardId  || '',
+        videoUrl:  alertData.videoUrl  || '',
+        duration:  String(alertData.duration  ?? 10),
+        chromakey: String(alertData.chromakey ?? false),
+        showTimer: String(alertData.showTimer ?? true),
+        obsScene:  alertData.obsScene  || '',
+        obsSource: alertData.obsSource || '',
+        obsFilter: alertData.obsFilter || ''
+    });
+}
+
+function wlogEnd(name) {
+    wlog({ type: 'alert_end', name });
+}
+
+function wlogQueue(name, count) {
+    wlog({ type: 'alert_queue', name, count: String(count) });
+}
+
+function wlogChromakey(action, obsSource, obsFilter) {
+    wlog({ type: 'chromakey', action, obsSource, obsFilter });
+}
+
+function wlog(fields = {}) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    try {
+        ws.send(JSON.stringify({
+            request: 'DoAction',
+            id:      'wlog',
+            action:  { name: 'WriteLog', group: '' },
+            args:    { source: 'OVERLAY', ...fields }
+        }));
+    } catch(_) {}
+}
+
+function setConn(ok, text) {
+    document.getElementById('dot').className        = 'dot' + (ok ? ' on' : '');
+    document.getElementById('connText').textContent = text;
+
+    const dbg = document.getElementById('debug');
+    if (ok) {
+        dbg.classList.remove('hiding', 'hidden');
+        clearTimeout(window._debugHideTimer);
+        window._debugHideTimer = setTimeout(() => {
+            dbg.classList.add('hiding');
+            setTimeout(() => dbg.classList.add('hidden'), 1000);
+        }, 5000);
+    } else {
+        clearTimeout(window._debugHideTimer);
+        dbg.classList.remove('hiding', 'hidden');
+    }
+}
+
+function setConfigStatus(ok, text) {
+    const dot  = document.getElementById('configDot');
+    const span = document.getElementById('configText');
+    if (dot)  dot.style.cssText  = ok ? 'background:#6af;animation:none' : 'background:#fa0;animation:blink 1s infinite';
+    if (span) span.textContent   = text;
+}
+
+// =====================================================================
+// CONSOLE API (DevTools)
+// =====================================================================
+window.testAlert  = (url, duration = 10, mediaType) => playAlert({ videoUrl: url, duration, mediaType });
+window.stopAlert  = () => stopCurrent();
+window.showQueue  = () => { dlog(`Черга (${alertQueue.length}): ${alertQueue.map(a => a.name).join(', ') || '—'}`); };
+window.showConfig = () => { dlog(`Конфіг (${alertsCache.length}): ${alertsCache.map(a => a.name).join(', ') || '—'}`); };
+
+// Тест першого алерту з кешу (кнопка ▶ в debug)
+function runLocalTest() {
+    if (alertsCache.length === 0) {
+        dlog('⚠️ Кеш порожній. Збережи алерт в адмін-панелі і натисни "Синхронізувати".');
+        return;
+    }
+    const a = alertsCache[0];
+    dlog(`▶ Тест: ${a.name}`);
+    playAlert(makeAlertArgs({ ...a, videoUrl: a.url }));
+}
+</script>
+</body>
+</html>

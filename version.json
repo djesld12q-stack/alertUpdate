@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "date": "2025-06-16",
+  "notes": "Перший реліз",
+  "hashes": {
+    "index.html": "PLACEHOLDER_HASH_INDEX",
+    "overlay.html": "PLACEHOLDER_HASH_OVERLAY"
+  }
+}

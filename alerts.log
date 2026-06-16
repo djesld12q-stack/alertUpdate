@@ -1,0 +1,150 @@
+﻿2026-06-15 10:50:27 [BROADCAST|reward_match] Без лайки | rewardId=1bf9bffd-cbca-47b9-a3db-645e215f145f | dur=12 | chromo OFF
+2026-06-15 10:50:27 [OVERLAY|alert_start] Без лайки | dur=12 | chromo OFF
+2026-06-15 10:50:27 [OVERLAY|error] SRC_NOT_SUPPORTED [video] Без лайки
+2026-06-15 10:50:27 [OVERLAY|alert_end] Без лайки
+2026-06-15 10:52:10 [INDEX|log] ✅ Відео завантажено успішно
+2026-06-15 10:52:13 [INDEX|log] ✅ Алерт оновлено
+2026-06-15 10:52:13 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-15 10:52:13 [INDEX|config] ⚙️ Синхронізовано (22 алертів)
+2026-06-15 10:52:25 [BROADCAST|reward_match] Без лайки | rewardId=1bf9bffd-cbca-47b9-a3db-645e215f145f | dur=12 | chromo OFF
+2026-06-15 10:52:25 [OVERLAY|alert_start] Без лайки | dur=12 | chromo OFF
+2026-06-15 10:52:25 [OVERLAY|error] SRC_NOT_SUPPORTED [video] Без лайки
+2026-06-15 10:52:25 [OVERLAY|alert_end] Без лайки
+2026-06-15 10:53:34 [BROADCAST|reward_match] Без лайки | rewardId=1bf9bffd-cbca-47b9-a3db-645e215f145f | dur=12 | chromo OFF
+2026-06-15 10:53:34 [OVERLAY|alert_start] Без лайки | dur=12 | chromo OFF
+2026-06-15 10:53:34 [OVERLAY|error] SRC_NOT_SUPPORTED [video] Без лайки
+2026-06-15 10:53:34 [OVERLAY|alert_end] Без лайки
+2026-06-15 11:00:04 [BROADCAST|reward_match] Ui ai ui ai | rewardId=3b38781f-f4ba-4161-802b-ac18a009a9f6 | dur=20 | chromo ON
+2026-06-15 11:00:04 [OVERLAY|alert_start] Ui ai ui ai | dur=20 | chromo ON
+2026-06-15 11:00:26 [OVERLAY|alert_end] Ui ai ui ai
+2026-06-15 11:02:19 [BROADCAST|reward_miss] rewardId=d0dfeccb-4b0f-4e73-945b-4db32053a368 | не знайдено алерту з таким rewardId
+2026-06-15 11:04:31 [INDEX|log] ✅ Відео завантажено успішно
+2026-06-15 11:04:40 [INDEX|log] ✅ Алерт додано
+2026-06-15 11:04:40 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-15 11:04:40 [INDEX|config] ⚙️ Синхронізовано (23 алертів)
+2026-06-15 11:04:45 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-15 11:04:45 [INDEX|config] ⚙️ Синхронізовано (22 алертів)
+2026-06-15 11:04:50 [BROADCAST|reward_match] Як:?* . я не знаю! | rewardId=d0dfeccb-4b0f-4e73-945b-4db32053a368 | dur=29 | chromo OFF
+2026-06-15 11:04:51 [OVERLAY|alert_start] Як:?* . я не знаю! | dur=29 | chromo OFF
+2026-06-15 11:05:20 [OVERLAY|alert_end] Як:?* . я не знаю!
+2026-06-15 11:07:35 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-15 11:32:26 [INDEX|log] ▶ Тест відправлено: оце так поворотище!
+2026-06-15 11:32:26 [OVERLAY|alert_start] оце так поворотище! | dur=5 | chromo OFF
+2026-06-15 11:32:32 [OVERLAY|alert_end] оце так поворотище!
+2026-06-15 11:32:52 [BROADCAST|reward_match] оце так поворотище! | rewardId=aef71f96-9585-4446-9412-739a2fa68d66 | dur=5 | chromo OFF
+2026-06-15 11:32:52 [OVERLAY|alert_start] оце так поворотище! | dur=5 | chromo OFF
+2026-06-15 11:32:57 [OVERLAY|alert_end] оце так поворотище!
+2026-06-15 11:48:35 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-15 11:51:40 [BROADCAST|reward_match] Pedro pedro pe | rewardId=bf468184-9918-41b2-bec9-d10a70e8e784 | dur=33 | chromo ON
+2026-06-15 11:51:40 [OVERLAY|alert_start] Pedro pedro pe | dur=33 | chromo ON
+2026-06-15 11:52:14 [OVERLAY|alert_end] Pedro pedro pe
+2026-06-15 11:53:38 [BROADCAST|reward_miss] rewardId=e0112660-762f-430f-9d32-7743022ad81e | не знайдено алерту з таким rewardId
+2026-06-15 11:55:45 [INDEX|log] ✅ Відео завантажено успішно
+2026-06-15 11:55:56 [INDEX|log] ✅ Алерт додано
+2026-06-15 11:55:56 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-15 11:55:56 [INDEX|config] ⚙️ Синхронізовано (23 алертів)
+2026-06-15 11:56:01 [BROADCAST|reward_match] Закрити гру | rewardId=e0112660-762f-430f-9d32-7743022ad81e | dur=13 | chromo OFF
+2026-06-15 11:56:01 [OVERLAY|alert_start] Закрити гру | dur=13 | chromo OFF
+2026-06-15 11:56:14 [OVERLAY|alert_end] Закрити гру
+2026-06-15 11:56:44 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-15 12:00:29 [BROADCAST|reward_miss] rewardId=720eca87-9731-419c-a339-07eb4be9eb43 | не знайдено алерту з таким rewardId
+2026-06-15 12:05:21 [INDEX|log] ✅ Відео завантажено успішно
+2026-06-15 12:05:30 [INDEX|log] ✅ Алерт додано
+2026-06-15 12:05:30 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-15 12:05:30 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:05:40 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-15 12:07:29 [BROADCAST|reward_match] Придумайти нікнейм | rewardId=720eca87-9731-419c-a339-07eb4be9eb43 | dur=6 | chromo OFF
+2026-06-15 12:07:29 [OVERLAY|alert_start] Придумайти нікнейм | dur=6 | chromo OFF
+2026-06-15 12:07:36 [OVERLAY|alert_end] Придумайти нікнейм
+2026-06-15 12:18:07 [INDEX|config] ⚙️ Синхронізовано (1 алертів)
+2026-06-15 12:18:07 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:21:32 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:21:32 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:22:15 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:22:15 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:22:21 [OVERLAY|alert_end] WBRB
+2026-06-15 12:23:42 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:23:42 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:23:57 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:23:57 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:24:03 [OVERLAY|alert_end] WBRB
+2026-06-15 12:24:38 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:24:38 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:24:44 [OVERLAY|alert_end] WBRB
+2026-06-15 12:25:03 [INDEX|log] 💬 Повідомлення в чат увімкнено
+2026-06-15 12:25:12 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:25:12 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:25:18 [OVERLAY|alert_end] WBRB
+2026-06-15 12:25:55 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:25:55 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:26:02 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:26:02 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:26:08 [OVERLAY|alert_end] WBRB
+2026-06-15 12:26:58 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:26:58 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:29:02 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:29:02 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:29:48 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:29:48 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:29:54 [OVERLAY|alert_end] WBRB
+2026-06-15 12:30:07 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:30:07 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:30:13 [OVERLAY|alert_end] WBRB
+2026-06-15 12:30:13 [INDEX|log] 💬 Повідомлення в чат увімкнено
+2026-06-15 12:30:16 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:30:16 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:30:23 [OVERLAY|alert_end] WBRB
+2026-06-15 12:30:26 [BROADCAST|reward_match] Нерви здали | rewardId=bdcb2f64-2d40-443a-8e41-622dfff0ef46 | dur=13 | chromo OFF
+2026-06-15 12:30:26 [OVERLAY|alert_start] Нерви здали | dur=13 | chromo OFF
+2026-06-15 12:30:39 [OVERLAY|alert_end] Нерви здали
+2026-06-15 12:33:55 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:33:55 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:34:13 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:34:13 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:34:19 [OVERLAY|alert_end] WBRB
+2026-06-15 12:36:12 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:36:12 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:37:38 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-15 12:38:03 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-15 12:39:01 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:39:01 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:39:07 [OVERLAY|alert_end] WBRB
+2026-06-15 12:40:35 [OVERLAY|alert_start] Тест | dur=10 | chromo OFF
+2026-06-15 12:40:45 [OVERLAY|alert_end] Тест
+2026-06-15 12:47:43 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:47:43 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:51:05 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:51:05 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 12:51:17 [INDEX|log] 👤 Нікнейм на екрані увімкнено
+2026-06-15 12:51:22 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:51:22 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:51:29 [OVERLAY|alert_end] WBRB
+2026-06-15 12:51:36 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 12:51:36 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 12:51:43 [OVERLAY|alert_end] WBRB
+2026-06-15 12:51:51 [BROADCAST|reward_match] GreenDog | rewardId=093ae4dd-87ef-48e1-83d5-aa3577148641 | dur=11 | chromo ON
+2026-06-15 12:51:51 [OVERLAY|alert_start] GreenDog | dur=11 | chromo ON
+2026-06-15 12:52:03 [OVERLAY|alert_end] GreenDog
+2026-06-15 12:58:56 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-15 12:58:56 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-15 13:00:03 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 13:00:03 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 13:00:10 [OVERLAY|alert_end] WBRB
+2026-06-15 13:00:26 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON
+2026-06-15 13:00:26 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-15 13:00:33 [OVERLAY|alert_end] WBRB
+2026-06-15 13:00:54 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-15 13:04:39 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-16 08:54:46 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-16 08:54:46 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-16 08:55:39 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-16 08:55:39 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-16 08:56:35 [INDEX|config] ⚙️ Синхронізовано (0 алертів)
+2026-06-16 08:56:35 [INDEX|log] 🧹 Список нагород очищено
+2026-06-16 08:56:35 [INDEX|config] 🧹 Список нагород очищено вручну
+2026-06-16 08:56:40 [INDEX|error] ❌ ⚠️ SB не відповів або файл не знайдено — спробуй "з файлу"
+2026-06-16 08:56:51 [INDEX|log] ✅ Імпортовано 24 алертів
+2026-06-16 08:56:51 [INDEX|config] ⚙️ Синхронізовано (24 алертів)
+2026-06-16 08:57:01 [BROADCAST|reward_match] Ви мольфарка? | rewardId=c1d355e6-2588-4afd-af8e-e58bdba83505 | dur=22 | chromo OFF
+2026-06-16 08:57:01 [OVERLAY|alert_start] Ви мольфарка? | dur=22 | chromo OFF
+2026-06-16 08:57:23 [OVERLAY|alert_end] Ви мольфарка?
